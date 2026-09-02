@@ -21,8 +21,8 @@ import { PracticeTaskView, QuizView } from '@/modules/quiz'
 import { StatisticsView } from '@/modules/statistics'
 import { KnowledgeMapView } from '@/modules/knowledge-map'
 
-// View mode: 'desktop' (full screen responsive) or 'mobile' (390px phone container)
-const viewMode = ref<'desktop' | 'mobile'>('desktop')
+// Mobile sidebar open state
+const isMobileSidebarOpen = ref(false)
 
 interface MenuItem {
   screen: ActiveScreen
@@ -45,10 +45,11 @@ const menuItems: MenuItem[] = [
 ]
 
 const shouldShowBottomNav = computed(() => {
-  return viewMode.value === 'mobile' && !['zen'].includes(appState.activeScreen)
+  return !['zen'].includes(appState.activeScreen)
 })
 
 function handleNavigate(item: MenuItem): void {
+  isMobileSidebarOpen.value = false
   if (item.tab) {
     appService.navigateToTab(item.tab)
   } else {
@@ -102,9 +103,21 @@ function handleBack(): void {
 </script>
 
 <template>
-  <div class="main-app-container" :class="`view-mode--${viewMode}`">
-    <!-- Desktop Sidebar -->
-    <aside class="desktop-sidebar">
+  <div class="main-app-container">
+    <!-- Backdrop for mobile sidebar drawer -->
+    <Transition name="fade">
+      <div
+        v-if="isMobileSidebarOpen"
+        class="sidebar-mobile-backdrop"
+        @click="isMobileSidebarOpen = false"
+      />
+    </Transition>
+
+    <!-- Sidebar: sticky on desktop, sliding drawer on mobile -->
+    <aside
+      class="app-sidebar"
+      :class="{ 'app-sidebar--mobile-open': isMobileSidebarOpen }"
+    >
       <!-- App Brand -->
       <div class="sidebar-brand">
         <span class="brand-logo">🧠</span>
@@ -112,10 +125,22 @@ function handleBack(): void {
           <h2 class="brand-name">Система Знаний</h2>
           <span class="brand-sub">Личная база & LMS</span>
         </div>
+        <!-- Mobile close button -->
+        <button
+          type="button"
+          class="sidebar-close-mobile-btn"
+          aria-label="Закрыть меню"
+          @click="isMobileSidebarOpen = false"
+        >
+          ✕
+        </button>
       </div>
 
-      <!-- Quick Search Input Trigger -->
-      <div class="sidebar-search-trigger" @click="appService.navigateToScreen('search')">
+      <!-- Quick Search Trigger -->
+      <div
+        class="sidebar-search-trigger"
+        @click="() => { isMobileSidebarOpen = false; appService.navigateToScreen('search') }"
+      >
         <span class="search-icon">🔍</span>
         <span class="search-placeholder">Поиск по материалам...</span>
         <kbd class="search-kbd">⌘K</kbd>
@@ -139,16 +164,28 @@ function handleBack(): void {
         </button>
       </nav>
 
-      <!-- Context Actions Box -->
+      <!-- Context Tools Box -->
       <div class="sidebar-tools">
         <span class="nav-section-title">ИНСТРУМЕНТЫ СТАТЬИ</span>
-        <button type="button" class="tool-btn" @click="handleOpenToc">
+        <button
+          type="button"
+          class="tool-btn"
+          @click="() => { isMobileSidebarOpen = false; handleOpenToc() }"
+        >
           <span>📑</span> Оглавление (TOC)
         </button>
-        <button type="button" class="tool-btn" @click="handleShowFullBreadcrumbs">
+        <button
+          type="button"
+          class="tool-btn"
+          @click="() => { isMobileSidebarOpen = false; handleShowFullBreadcrumbs() }"
+        >
           <span>🧭</span> Полный путь
         </button>
-        <button type="button" class="tool-btn" @click="handleOpenZen">
+        <button
+          type="button"
+          class="tool-btn"
+          @click="() => { isMobileSidebarOpen = false; handleOpenZen() }"
+        >
           <span>👁️</span> Zen-режим
         </button>
       </div>
@@ -169,14 +206,27 @@ function handleBack(): void {
       </div>
     </aside>
 
-    <!-- Main Content Wrapper -->
+    <!-- Main Content Area -->
     <div class="content-wrapper">
-      <!-- Desktop Header Bar -->
+      <!-- Top Navigation Bar -->
       <header class="top-nav-bar">
         <div class="top-nav-left">
+          <!-- Hamburger button for mobile/tablet screens -->
+          <button
+            type="button"
+            class="mobile-menu-toggle-btn"
+            aria-label="Открыть меню"
+            @click="isMobileSidebarOpen = true"
+          >
+            <span class="bar" />
+            <span class="bar" />
+            <span class="bar" />
+          </button>
+
           <span class="current-screen-badge">
-            Экран: {{ appState.activeScreen.toUpperCase() }}
+            {{ appState.activeScreen.toUpperCase() }}
           </span>
+
           <div class="desktop-breadcrumbs">
             <span>Vue 3</span>
             <span class="sep">/</span>
@@ -189,154 +239,102 @@ function handleBack(): void {
         </div>
 
         <div class="top-nav-right">
-          <!-- View Mode Switcher: Desktop vs Mobile Emulator -->
-          <div class="view-mode-toggle">
-            <button
-              type="button"
-              class="toggle-btn"
-              :class="{ 'toggle-btn--active': viewMode === 'desktop' }"
-              @click="viewMode = 'desktop'"
-            >
-              🖥️ Десктоп во весь экран
-            </button>
-            <button
-              type="button"
-              class="toggle-btn"
-              :class="{ 'toggle-btn--active': viewMode === 'mobile' }"
-              @click="viewMode = 'mobile'"
-            >
-              📱 Мобильный вид
-            </button>
-          </div>
+          <!-- Clean minimal desktop search trigger or status -->
+          <button
+            type="button"
+            class="header-search-btn"
+            title="Поиск"
+            @click="appService.navigateToScreen('search')"
+          >
+            <span>🔍</span>
+            <span class="search-text">Поиск...</span>
+          </button>
         </div>
       </header>
 
-      <!-- Main Stage Container -->
+      <!-- Responsive Full Width Content View -->
       <main class="main-stage">
-        <!-- If Mobile View Mode: emulate 410px phone container -->
-        <div v-if="viewMode === 'mobile'" class="mobile-emulator-shell">
-          <div class="mobile-emulator-inner">
-            <!-- Screen Components -->
-            <DashboardView
-              v-if="appState.activeScreen === 'dashboard'"
-              @open-article="handleOpenArticle"
-              @open-quiz="handleOpenQuiz"
-              @open-practice="handleOpenPractice"
-              @open-tree="handleOpenTree"
-            />
-            <GlobalSearchView
-              v-else-if="appState.activeScreen === 'search'"
-              @select-result="(res) => handleOpenArticle(res.articleId)"
-            />
-            <KnowledgeTreeView
-              v-else-if="appState.activeScreen === 'tree'"
-              @open-article="handleOpenArticle"
-              @show-full-breadcrumbs="handleShowFullBreadcrumbs"
-              @back="handleBack"
-            />
-            <ArticleReaderView
-              v-else-if="appState.activeScreen === 'article'"
-              @back="handleBack"
-              @open-toc="handleOpenToc"
-              @open-notes="handleOpenNotes"
-              @open-zen="handleOpenZen"
-              @share="appService.showToast('Ссылка скопирована в буфер!')"
-              @next-page="appService.showToast('Следующий раздел')"
-              @prev-page="appService.showToast('Предыдущий раздел')"
-            />
-            <ZenReaderView
-              v-else-if="appState.activeScreen === 'zen'"
-              @exit="() => appService.navigateToScreen('article')"
-            />
-            <NotesListView
-              v-else-if="appState.activeScreen === 'notes'"
-              @back="handleBack"
-              @select-note="(id) => appService.showToast(`Выбрана заметка ${id}`)"
-            />
-            <QuizView
-              v-else-if="appState.activeScreen === 'quiz'"
-              @back="handleBack"
-              @next-question="() => appService.showToast('Переход к вопросу 4 из 5')"
-            />
-            <PracticeTaskView
-              v-else-if="appState.activeScreen === 'practice'"
-              @back="handleBack"
-              @complete="() => { appService.showToast('Задание успешно выполнено!'); appService.navigateToTab('profile') }"
-            />
-            <StatisticsView
-              v-else-if="appState.activeScreen === 'profile'"
-            />
-            <KnowledgeMapView
-              v-else-if="appState.activeScreen === 'map'"
-              @open-article="handleOpenArticle"
-            />
+        <!-- Screen 1: Dashboard -->
+        <DashboardView
+          v-if="appState.activeScreen === 'dashboard'"
+          @open-article="handleOpenArticle"
+          @open-quiz="handleOpenQuiz"
+          @open-practice="handleOpenPractice"
+          @open-tree="handleOpenTree"
+        />
 
-            <!-- Mobile Bottom Nav inside emulator -->
-            <BottomNavigation
-              v-if="shouldShowBottomNav"
-              :active-tab="appState.activeTab"
-              @update:active-tab="handleTabChange"
-            />
-          </div>
-        </div>
+        <!-- Screen 2: Global Search -->
+        <GlobalSearchView
+          v-else-if="appState.activeScreen === 'search'"
+          @select-result="(res) => handleOpenArticle(res.articleId)"
+        />
 
-        <!-- Desktop Mode: Responsive Full-screen Stage -->
-        <div v-else class="desktop-stage-inner">
-          <DashboardView
-            v-if="appState.activeScreen === 'dashboard'"
-            @open-article="handleOpenArticle"
-            @open-quiz="handleOpenQuiz"
-            @open-practice="handleOpenPractice"
-            @open-tree="handleOpenTree"
-          />
-          <GlobalSearchView
-            v-else-if="appState.activeScreen === 'search'"
-            @select-result="(res) => handleOpenArticle(res.articleId)"
-          />
-          <KnowledgeTreeView
-            v-else-if="appState.activeScreen === 'tree'"
-            @open-article="handleOpenArticle"
-            @show-full-breadcrumbs="handleShowFullBreadcrumbs"
-            @back="handleBack"
-          />
-          <ArticleReaderView
-            v-else-if="appState.activeScreen === 'article'"
-            @back="handleBack"
-            @open-toc="handleOpenToc"
-            @open-notes="handleOpenNotes"
-            @open-zen="handleOpenZen"
-            @share="appService.showToast('Ссылка скопирована в буфер!')"
-            @next-page="appService.showToast('Следующий раздел')"
-            @prev-page="appService.showToast('Предыдущий раздел')"
-          />
-          <ZenReaderView
-            v-else-if="appState.activeScreen === 'zen'"
-            @exit="() => appService.navigateToScreen('article')"
-          />
-          <NotesListView
-            v-else-if="appState.activeScreen === 'notes'"
-            @back="handleBack"
-            @select-note="(id) => appService.showToast(`Выбрана заметка ${id}`)"
-          />
-          <QuizView
-            v-else-if="appState.activeScreen === 'quiz'"
-            @back="handleBack"
-            @next-question="() => appService.showToast('Переход к вопросу 4 из 5')"
-          />
-          <PracticeTaskView
-            v-else-if="appState.activeScreen === 'practice'"
-            @back="handleBack"
-            @complete="() => { appService.showToast('Задание успешно выполнено!'); appService.navigateToTab('profile') }"
-          />
-          <StatisticsView
-            v-else-if="appState.activeScreen === 'profile'"
-          />
-          <KnowledgeMapView
-            v-else-if="appState.activeScreen === 'map'"
-            @open-article="handleOpenArticle"
-          />
-        </div>
+        <!-- Screen 3: Deep Knowledge Tree -->
+        <KnowledgeTreeView
+          v-else-if="appState.activeScreen === 'tree'"
+          @open-article="handleOpenArticle"
+          @show-full-breadcrumbs="handleShowFullBreadcrumbs"
+          @back="handleBack"
+        />
+
+        <!-- Screen 4: Article Reader -->
+        <ArticleReaderView
+          v-else-if="appState.activeScreen === 'article'"
+          @back="handleBack"
+          @open-toc="handleOpenToc"
+          @open-notes="handleOpenNotes"
+          @open-zen="handleOpenZen"
+          @share="appService.showToast('Ссылка скопирована в буфер!')"
+          @next-page="appService.showToast('Следующий раздел')"
+          @prev-page="appService.showToast('Предыдущий раздел')"
+        />
+
+        <!-- Screen 6: Zen Reader -->
+        <ZenReaderView
+          v-else-if="appState.activeScreen === 'zen'"
+          @exit="() => appService.navigateToScreen('article')"
+        />
+
+        <!-- Screen 7: Notes -->
+        <NotesListView
+          v-else-if="appState.activeScreen === 'notes'"
+          @back="handleBack"
+          @select-note="(id) => appService.showToast(`Выбрана заметка ${id}`)"
+        />
+
+        <!-- Screen 8: Quiz Self-Check -->
+        <QuizView
+          v-else-if="appState.activeScreen === 'quiz'"
+          @back="handleBack"
+          @next-question="() => appService.showToast('Переход к вопросу 4 из 5')"
+        />
+
+        <!-- Screen 9: Practice Coding Task -->
+        <PracticeTaskView
+          v-else-if="appState.activeScreen === 'practice'"
+          @back="handleBack"
+          @complete="() => { appService.showToast('Задание успешно выполнено!'); appService.navigateToTab('profile') }"
+        />
+
+        <!-- Screen 10: Statistics & Profile -->
+        <StatisticsView
+          v-else-if="appState.activeScreen === 'profile'"
+        />
+
+        <!-- Screen 11: Knowledge Graph Map -->
+        <KnowledgeMapView
+          v-else-if="appState.activeScreen === 'map'"
+          @open-article="handleOpenArticle"
+        />
       </main>
+
+      <!-- Bottom Navigation Bar (Visible only on mobile/tablets <= 900px) -->
+      <BottomNavigation
+        v-if="shouldShowBottomNav"
+        class="mobile-bottom-nav"
+        :active-tab="appState.activeTab"
+        @update:active-tab="handleTabChange"
+      />
     </div>
 
     <!-- Modals & Drawers -->
@@ -370,10 +368,20 @@ function handleBack(): void {
   width: 100%;
   min-height: 100vh;
   background: #f8fafc;
+  position: relative;
 }
 
-/* Desktop Sidebar */
-.desktop-sidebar {
+/* Mobile Sidebar Backdrop */
+.sidebar-mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 90;
+}
+
+/* App Sidebar */
+.app-sidebar {
   width: 270px;
   background: #ffffff;
   border-right: 1px solid #e2e8f0;
@@ -386,9 +394,21 @@ function handleBack(): void {
   overflow-y: auto;
   padding: 1.25rem 1rem;
   gap: 1.25rem;
+  z-index: 100;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 
+  /* Hide on screens <= 900px and make drawer */
   @media (max-width: 900px) {
-    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    transform: translateX(-100%);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+    &--mobile-open {
+      transform: translateX(0);
+    }
   }
 }
 
@@ -397,6 +417,7 @@ function handleBack(): void {
   align-items: center;
   gap: 0.75rem;
   padding: 0.25rem 0.5rem;
+  position: relative;
 
   .brand-logo {
     font-size: 2rem;
@@ -413,6 +434,25 @@ function handleBack(): void {
   .brand-sub {
     font-size: 0.75rem;
     color: #64748b;
+  }
+
+  .sidebar-close-mobile-btn {
+    display: none;
+    margin-left: auto;
+    background: #f1f5f9;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: #64748b;
+
+    @media (max-width: 900px) {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   }
 }
 
@@ -602,7 +642,30 @@ function handleBack(): void {
   .top-nav-left {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.85rem;
+  }
+
+  .mobile-menu-toggle-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 28px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+
+    .bar {
+      width: 100%;
+      height: 2.5px;
+      background: #0f172a;
+      border-radius: 2px;
+    }
+
+    @media (max-width: 900px) {
+      display: flex;
+    }
   }
 
   .current-screen-badge {
@@ -636,29 +699,33 @@ function handleBack(): void {
     }
   }
 
-  .view-mode-toggle {
+  .top-nav-right {
     display: flex;
-    background: #f1f5f9;
-    border-radius: 12px;
-    padding: 0.25rem;
-    gap: 0.25rem;
+    align-items: center;
+    gap: 0.5rem;
+  }
 
-    .toggle-btn {
-      background: none;
-      border: none;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      color: #64748b;
-      padding: 0.35rem 0.75rem;
-      border-radius: 9px;
-      cursor: pointer;
-      transition: all 0.15s ease;
+  .header-search-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8125rem;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.15s ease;
 
-      &--active {
-        background: #ffffff;
-        color: #0f172a;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-      }
+    &:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+      border-color: #cbd5e1;
+    }
+
+    .search-text {
+      font-size: 0.75rem;
     }
   }
 }
@@ -669,39 +736,19 @@ function handleBack(): void {
   flex-direction: column;
   min-height: 0;
   width: 100%;
+
+  @media (max-width: 900px) {
+    padding-bottom: 4.5rem; /* space for bottom nav */
+  }
 }
 
-/* Desktop Full-screen Stage */
-.desktop-stage-inner {
-  flex: 1;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
+/* Mobile bottom nav: hidden on desktop, visible on mobile */
+.mobile-bottom-nav {
+  display: none !important;
 
-/* Mobile Emulator Shell */
-.mobile-emulator-shell {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem 1rem;
-  background: #e2e8f0;
-}
-
-.mobile-emulator-inner {
-  width: 100%;
-  max-width: 410px;
-  height: 840px;
-  background: #ffffff;
-  border-radius: 40px;
-  box-shadow:
-    0 0 0 8px #1e293b,
-    0 20px 40px rgba(0, 0, 0, 0.25);
-  overflow-y: auto;
-  position: relative;
-  display: flex;
-  flex-direction: column;
+  @media (max-width: 900px) {
+    display: flex !important;
+  }
 }
 
 /* Toast */
@@ -730,5 +777,15 @@ function handleBack(): void {
 .toast-leave-to {
   opacity: 0;
   transform: translateY(10px);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
