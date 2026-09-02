@@ -1,0 +1,5 @@
+export { default as NotesListView } from './ui/NotesListView.vue'
+export { default as NoteCreateModal } from './ui/NoteCreateModal.vue'
+export { notesService } from './services/notes.service'
+export { notesState } from './state/notes.state'
+export * from './adapters/notes.adapter'
