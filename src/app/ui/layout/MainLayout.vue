@@ -3,7 +3,6 @@ import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { appService } from '@/app/services/app-service'
 import { appState } from '@/app/state/app-state'
 import { authService } from '@/modules/auth'
-import { isSupabaseConfigured } from '@/api/supabase'
 import { BottomNavigation } from '@/shared/ui'
 import KnowledgeTreeView from '@/modules/knowledge/ui/KnowledgeTreeView.vue'
 import { useRoute } from 'vue-router'
@@ -193,7 +192,6 @@ onUnmounted(() => window.removeEventListener('keydown', handleGlobalKeydown))
             <span class="user-status">Изучает Vue 3</span>
           </div>
           <button
-            v-if="isSupabaseConfigured"
             type="button"
             class="sign-out-btn"
             title="Выйти"

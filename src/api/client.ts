@@ -82,15 +82,6 @@ function buildArticleSections(rows: ArticleSectionRow[], readMap: Map<string, bo
   return roots
 }
 
-function flattenSections(sections: ArticleSectionDTO[]): ArticleSectionDTO[] {
-  const flat: ArticleSectionDTO[] = []
-  for (const section of sections) {
-    flat.push(section)
-    if (section.children) flat.push(...flattenSections(section.children))
-  }
-  return flat
-}
-
 export const apiClient = {
   async getUserProfile(): Promise<UserProfile> {
         const userId = await getCurrentUserId()
@@ -155,12 +146,6 @@ export const apiClient = {
   },
 
   async getArticleById(id: string): Promise<ArticleDTO> {
-    if (!isSupabaseConfigured) {
-      const article = mockArticles[id]
-      if (!article) throw new Error(`Статья "${id}" не найдена.`)
-      return Promise.resolve(JSON.parse(JSON.stringify(article)))
-    }
-
     const userId = await getCurrentUserId()
     const [
       { data: article, error: articleError },
@@ -233,17 +218,6 @@ export const apiClient = {
   },
 
   async addNote(note: Omit<NoteDTO, 'id' | 'created_at' | 'created_at_label'>): Promise<NoteDTO> {
-    if (!isSupabaseConfigured) {
-      const newNote: NoteDTO = {
-        ...note,
-        id: `note_${Date.now()}`,
-        created_at: new Date().toISOString(),
-        created_at_label: 'Только что'
-      }
-      mockNotes.unshift(newNote)
-      return Promise.resolve(newNote)
-    }
-
     const userId = await getCurrentUserId()
     const { data, error } = await supabase
       .from('notes')
@@ -296,11 +270,7 @@ export const apiClient = {
     return data
   },
 
-  async getLearningStats(period: string = mockLearningStats.period): Promise<LearningStatsDTO> {
-    if (!isSupabaseConfigured) {
-      return Promise.resolve({ ...(mockLearningStatsByPeriod[period] ?? mockLearningStats) })
-    }
-
+  async getLearningStats(period: string = 'За неделю'): Promise<LearningStatsDTO> {
     const userId = await getCurrentUserId()
     const [{ data: stats, error: statsError }, { data: categories, error: categoriesError }] = await Promise.all([
       supabase.from('learning_stats').select('*').eq('user_id', userId).eq('period', period).maybeSingle(),
@@ -355,50 +325,6 @@ export const apiClient = {
   async searchContent(query: string): Promise<SearchResultDTO[]> {
     const q = query.trim().toLowerCase()
     if (!q) return []
-
-    if (!isSupabaseConfigured) {
-      const results: SearchResultDTO[] = []
-
-      for (const article of Object.values(mockArticles)) {
-        if (article.title.toLowerCase().includes(q) || article.tags.some(tag => tag.toLowerCase().includes(q))) {
-          results.push({
-            id: `article_${article.id}`,
-            title: article.title,
-            category_path: article.category_path.join(' › '),
-            snippet_text: '',
-            entity_type: 'article',
-            article_id: article.id
-          })
-        }
-        for (const section of flattenSections(article.sections)) {
-          if (section.title.toLowerCase().includes(q)) {
-            results.push({
-              id: `section_${section.id}`,
-              title: section.title,
-              category_path: `${article.category_path.join(' › ')} › ${article.title}`,
-              snippet_text: '',
-              entity_type: 'section',
-              article_id: article.id
-            })
-          }
-        }
-      }
-
-      for (const note of mockNotes) {
-        if (note.quote_text.toLowerCase().includes(q) || (note.user_comment ?? '').toLowerCase().includes(q)) {
-          results.push({
-            id: `note_${note.id}`,
-            title: note.quote_text.length > 70 ? `${note.quote_text.slice(0, 70)}…` : note.quote_text,
-            category_path: 'Заметка',
-            snippet_text: note.user_comment ?? '',
-            entity_type: 'note',
-            article_id: note.article_id
-          })
-        }
-      }
-
-      return results.slice(0, 20)
-    }
 
     const userId = await getCurrentUserId()
     const [{ data: articleRows, error: articleError }, { data: sectionRows, error: sectionError }, { data: noteRows, error: noteError }] =

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { isSupabaseConfigured } from '@/api/supabase'
 import { AuthView, authService, authState } from '@/modules/auth'
 import { appState } from '@/app/state/app-state'
 import MainLayout from '@/app/ui/layout/MainLayout.vue'
@@ -11,12 +10,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- Auth gate: only meaningful when a real Supabase project is configured -->
-  <div v-if="isSupabaseConfigured && authState.isInitializing" class="auth-loading-screen">
+  <!-- Auth gate: a Supabase project is required (see src/api/supabase.ts) -->
+  <div v-if="authState.isInitializing" class="auth-loading-screen">
     <span class="auth-loading-spinner" />
   </div>
 
-  <AuthView v-else-if="isSupabaseConfigured && !appState.user" />
+  <AuthView v-else-if="!appState.user" />
 
   <MainLayout v-else>
     <RouterView v-slot="{ Component }">
