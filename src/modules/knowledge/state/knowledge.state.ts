@@ -8,6 +8,8 @@ interface KnowledgeState {
   selectedSectionId: string
   fontSizeLevel: number // 0: нормальный, 1: крупный, 2: очень крупный
   isLoading: boolean
+  isTocOpen: boolean
+  isBreadcrumbsOpen: boolean
 }
 
 export const knowledgeState = reactive<KnowledgeState>({
@@ -16,5 +18,7 @@ export const knowledgeState = reactive<KnowledgeState>({
   selectedNodeId: 'node_watch_sub_2',
   selectedSectionId: 'sec_2_2',
   fontSizeLevel: 0,
-  isLoading: false
+  isLoading: false,
+  isTocOpen: false,
+  isBreadcrumbsOpen: false
 })

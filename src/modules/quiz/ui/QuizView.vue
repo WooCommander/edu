@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { appService } from '@/app/services/app-service'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { BaseButton, BaseProgressBar } from '@/shared/ui'
@@ -29,7 +30,7 @@ function handleOptionClick(key: string): void {
     <!-- Header with progress bar -->
     <header class="quiz-header">
       <div class="quiz-header__top">
-        <button type="button" class="back-btn" @click="emit('back')">‹</button>
+        <button type="button" class="back-btn" @click="appService.goBack()">‹</button>
         <span class="quiz-header__title">{{ quizState.currentQuestion.progressLabel }}</span>
         <button type="button" class="more-btn">•••</button>
       </div>

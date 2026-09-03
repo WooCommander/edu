@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { appService } from '@/app/services/app-service'
 import { computed, onMounted } from 'vue'
 
 import { BaseButton, BaseCard, BaseTabs } from '@/shared/ui'
@@ -58,7 +59,7 @@ function handleSaveNote(payload: { quoteText: string; comment: string; color: Hi
   <div class="notes-view">
     <!-- Header -->
     <header class="notes-header">
-      <button type="button" class="back-btn" @click="emit('back')">‹</button>
+      <button type="button" class="back-btn" @click="appService.goBack()">‹</button>
       <h1 class="notes-title">Мои заметки</h1>
       <button type="button" class="more-btn">•••</button>
     </header>

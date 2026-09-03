@@ -6,11 +6,13 @@ interface NotesState {
   activeTab: 'all' | 'current' | 'related'
   isCreateModalOpen: boolean
   isLoading: boolean
+  isNoteModalOpen: boolean
 }
 
 export const notesState = reactive<NotesState>({
   notes: [],
   activeTab: 'current',
   isCreateModalOpen: false,
-  isLoading: false
+  isLoading: false,
+  isNoteModalOpen: false
 })

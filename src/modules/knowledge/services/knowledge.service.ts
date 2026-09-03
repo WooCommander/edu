@@ -39,6 +39,14 @@ class KnowledgeService {
     knowledgeState.fontSizeLevel = (knowledgeState.fontSizeLevel + 1) % 3
   }
 
+  public toggleToc(forceState?: boolean): void {
+    knowledgeState.isTocOpen = forceState !== undefined ? forceState : !knowledgeState.isTocOpen
+  }
+
+  public toggleBreadcrumbs(forceState?: boolean): void {
+    knowledgeState.isBreadcrumbsOpen = forceState !== undefined ? forceState : !knowledgeState.isBreadcrumbsOpen
+  }
+
   public setSelectedSection(sectionId: string): void {
     knowledgeState.selectedSectionId = sectionId
   }

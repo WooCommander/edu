@@ -6,6 +6,7 @@ import {
   mockKnowledgeGraph,
   mockKnowledgeTree,
   mockLearningStats,
+  mockLearningStatsByPeriod,
   mockNotes,
   mockPracticeTask,
   mockQuizQuestions,
@@ -325,12 +326,14 @@ export const apiClient = {
     return data
   },
 
-  async getLearningStats(): Promise<LearningStatsDTO> {
-    if (!isSupabaseConfigured) return Promise.resolve({ ...mockLearningStats })
+  async getLearningStats(period: string = mockLearningStats.period): Promise<LearningStatsDTO> {
+    if (!isSupabaseConfigured) {
+      return Promise.resolve({ ...(mockLearningStatsByPeriod[period] ?? mockLearningStats) })
+    }
 
     const userId = await getCurrentUserId()
     const [{ data: stats, error: statsError }, { data: categories, error: categoriesError }] = await Promise.all([
-      supabase.from('learning_stats').select('*').eq('user_id', userId).maybeSingle(),
+      supabase.from('learning_stats').select('*').eq('user_id', userId).eq('period', period).maybeSingle(),
       supabase.from('category_progress').select('*').eq('user_id', userId).order('sort_order')
     ])
     if (statsError) throw statsError

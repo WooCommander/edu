@@ -1,17 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { BaseButton } from '@/shared/ui'
+import { appService } from '@/app/services/app-service'
+import { searchState } from '@/modules/search'
 import { knowledgeService } from '../services/knowledge.service'
 import { knowledgeState } from '../state/knowledge.state'
 import KnowledgeTreeNode from './KnowledgeTreeNode.vue'
-import { findBreadcrumbPath } from '../adapters/knowledge.adapter'
-import type { TreeNodeUIModel } from '../adapters/knowledge.adapter'
-
-const emit = defineEmits<{
-  (e: 'openArticle', articleId: string): void
-  (e: 'showFullBreadcrumbs'): void
-  (e: 'back'): void
-}>()
+import { filterTreeByQuery, type TreeNodeUIModel } from '../adapters/knowledge.adapter'
+import { Loader2, SearchX } from 'lucide-vue-next'
 
 onMounted(async () => {
   if (!knowledgeState.tree) {
@@ -19,55 +14,39 @@ onMounted(async () => {
   }
 })
 
-const breadcrumbPath = computed<string[]>(() => {
-  if (!knowledgeState.tree || !knowledgeState.selectedNodeId) return []
-  return findBreadcrumbPath(knowledgeState.tree, knowledgeState.selectedNodeId).map(node => node.title)
+// Живая фильтрация дерева по запросу из поля поиска в сайдбаре
+const visibleTree = computed(() => {
+  const query = searchState.query.trim()
+  if (!query || !knowledgeState.tree) return knowledgeState.tree
+  return filterTreeByQuery(knowledgeState.tree, query)
 })
 
 function handleSelectNode(node: TreeNodeUIModel): void {
   knowledgeService.setSelectedNode(node.id)
   if (node.hasArticle && node.articleId) {
-    emit('openArticle', node.articleId)
+    appService.openArticle(node.articleId)
   }
 }
 </script>
 
 <template>
   <div class="tree-view">
-    <!-- Breadcrumbs header bar -->
-    <header class="tree-view__header">
-      <div v-if="breadcrumbPath.length > 0" class="tree-view__breadcrumbs">
-        <template v-for="(crumb, index) in breadcrumbPath" :key="index">
-          <span v-if="index > 0" class="sep">›</span>
-          <span class="crumb" :class="{ active: index === breadcrumbPath.length - 1 }">{{ crumb }}</span>
-        </template>
-      </div>
-      <div v-else class="tree-view__breadcrumbs">
-        <span class="crumb">Выберите раздел ниже</span>
-      </div>
-    </header>
-
-    <!-- Tree body with horizontal scroll container for deep levels -->
-    <div class="tree-view__container">
-      <div class="tree-view__scroll-inner">
-        <KnowledgeTreeNode
-          v-if="knowledgeState.tree"
-          :node="knowledgeState.tree"
-          :selected-node-id="knowledgeState.selectedNodeId"
-          @select-node="handleSelectNode"
-        />
-      </div>
+    <div v-if="knowledgeState.isLoading && !knowledgeState.tree" class="tree-view__loading">
+      <Loader2 class="icon-spinner" />
+      <span>Загрузка...</span>
     </div>
 
-    <!-- Bottom action button -->
-    <div class="tree-view__footer">
-      <BaseButton
-        variant="outline"
-        full-width
-        @click="emit('showFullBreadcrumbs')"
-      >
-        <span>🧭</span> Показать полный путь
-      </BaseButton>
+    <div v-else-if="visibleTree" class="tree-view__scroll-inner">
+      <KnowledgeTreeNode
+        :node="visibleTree"
+        :selected-node-id="knowledgeState.selectedNodeId"
+        @select-node="handleSelectNode"
+      />
+    </div>
+
+    <div v-else-if="searchState.query.trim()" class="tree-view__empty">
+      <SearchX class="icon-empty" />
+      <span>Ничего не найдено по «{{ searchState.query }}»</span>
     </div>
   </div>
 </template>
@@ -77,51 +56,53 @@ function handleSelectNode(node: TreeNodeUIModel): void {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding-bottom: 5.5rem;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 0.5rem 2rem 0;
 
-  &__header {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #f1f5f9;
-    background: #ffffff;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-
-  &__breadcrumbs {
+  &__loading {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0.35rem;
-    font-size: 0.8125rem;
-    color: #64748b;
-    overflow-x: auto;
-    white-space: nowrap;
-
-    .sep {
-      color: #cbd5e1;
-    }
-
-    .active {
+    justify-content: center;
+    padding: 2rem 0;
+    gap: 0.5rem;
+    color: #94a3b8;
+    font-size: 0.875rem;
+    
+    .icon-spinner {
+      width: 20px;
+      height: 20px;
       color: #6366f1;
-      font-weight: 600;
+      animation: spin 1s linear infinite;
     }
-  }
-
-  &__container {
-    flex: 1;
-    overflow: auto;
-    padding: 1rem;
   }
 
   &__scroll-inner {
-    min-width: 100%;
-    width: max-content;
+    width: 100%;
   }
 
-  &__footer {
-    padding: 0.75rem 1rem;
-    background: #ffffff;
-    border-top: 1px solid #f1f5f9;
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    gap: 0.5rem;
+    color: #94a3b8;
+    font-size: 0.8125rem;
+    text-align: center;
+
+    .icon-empty {
+      width: 22px;
+      height: 22px;
+      color: #cbd5e1;
+    }
   }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>

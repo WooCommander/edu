@@ -1,7 +1,4 @@
-export { default as KnowledgeTreeView } from './ui/KnowledgeTreeView.vue'
-export { default as ArticleReaderView } from './ui/ArticleReaderView.vue'
 export { default as ArticleTocDrawer } from './ui/ArticleTocDrawer.vue'
-export { default as ZenReaderView } from './ui/ZenReaderView.vue'
 export { default as BreadcrumbPathModal } from './ui/BreadcrumbPathModal.vue'
 export { knowledgeService } from './services/knowledge.service'
 export { knowledgeState } from './state/knowledge.state'

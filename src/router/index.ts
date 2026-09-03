@@ -9,13 +9,11 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/search',
-    name: 'search',
-    component: () => import('@/modules/search/ui/GlobalSearchView.vue')
+    redirect: '/'
   },
   {
     path: '/tree',
-    name: 'tree',
-    component: () => import('@/modules/knowledge/ui/KnowledgeTreeView.vue')
+    redirect: '/'
   },
   {
     path: '/article/:id?',
@@ -49,8 +47,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/map',
-    name: 'map',
-    component: () => import('@/modules/knowledge-map/ui/KnowledgeMapView.vue')
+    redirect: '/'
   }
 ]
 

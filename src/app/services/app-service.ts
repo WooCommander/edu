@@ -1,6 +1,8 @@
 import { appState } from '../state/app-state'
 import type { ActiveScreen, NavTab, UserProfile } from '@/shared/types'
 import { router } from '@/router'
+import { knowledgeService } from '@/modules/knowledge/services/knowledge.service'
+import { notesService } from '@/modules/notes/services/notes.service'
 
 class AppService {
   public setUser(user: UserProfile | null): void {
@@ -18,6 +20,10 @@ class AppService {
 
   public navigateToScreen(screen: ActiveScreen, articleId?: string): void {
     router.push({ name: screen, params: articleId ? { id: articleId } : undefined })
+  }
+
+  public goBack(): void {
+    router.back()
   }
 
   public openArticle(articleId: string = 'article_watch'): void {
@@ -44,15 +50,15 @@ class AppService {
   }
 
   public toggleToc(forceState?: boolean): void {
-    appState.isTocOpen = forceState !== undefined ? forceState : !appState.isTocOpen
+    knowledgeService.toggleToc(forceState)
   }
 
   public toggleBreadcrumbs(forceState?: boolean): void {
-    appState.isBreadcrumbsOpen = forceState !== undefined ? forceState : !appState.isBreadcrumbsOpen
+    knowledgeService.toggleBreadcrumbs(forceState)
   }
 
   public toggleNoteModal(forceState?: boolean): void {
-    appState.isNoteModalOpen = forceState !== undefined ? forceState : !appState.isNoteModalOpen
+    notesService.toggleNoteModal(forceState)
   }
 
   public showToast(message: string): void {

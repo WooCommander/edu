@@ -107,6 +107,30 @@ export function adaptArticle(dto: ArticleDTO): ArticleUIModel {
 }
 
 /**
+ * Prunes the tree down to nodes whose title or code matches `query`, plus
+ * every ancestor needed to reach them (which are force-expanded via
+ * `isExpanded` so the match is visible without manual clicking).
+ * Returns `null` when nothing in the tree matches.
+ */
+export function filterTreeByQuery(node: TreeNodeUIModel, query: string): TreeNodeUIModel | null {
+  const q = query.trim().toLowerCase()
+  if (!q) return node
+
+  const selfMatches = node.title.toLowerCase().includes(q) || node.code.toLowerCase().includes(q)
+  const matchedChildren = node.children
+    .map(child => filterTreeByQuery(child, q))
+    .filter((child): child is TreeNodeUIModel => child !== null)
+
+  if (!selfMatches && matchedChildren.length === 0) return null
+
+  return {
+    ...node,
+    children: matchedChildren,
+    isExpanded: matchedChildren.length > 0
+  }
+}
+
+/**
  * Walks the tree from `root` to the node with id `targetId`, returning the
  * chain of real nodes along the way (the synthetic level-0 root is skipped).
  * Used for both the tree screen's own breadcrumb and BreadcrumbPathModal.

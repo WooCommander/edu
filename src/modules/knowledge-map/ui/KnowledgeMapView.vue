@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { appService } from '@/app/services/app-service'
 import { computed, onMounted } from 'vue'
 import { knowledgeMapService } from '../services/knowledge-map.service'
 import { knowledgeMapState } from '../state/knowledge-map.state'
@@ -72,7 +73,7 @@ const graphEdges = computed(() => {
 function handleNodeClick(node: GraphNodeUIModel): void {
   knowledgeMapService.selectNode(node.id)
   if (node.articleId) {
-    emit('openArticle', node.articleId)
+    appService.openArticle(node.articleId)
   }
 }
 

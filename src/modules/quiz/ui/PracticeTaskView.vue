@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { appService } from '@/app/services/app-service'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { BaseButton, BaseTabs } from '@/shared/ui'
@@ -38,7 +39,7 @@ function handleVerify(): void {
     <!-- Header -->
     <header class="practice-header">
       <div class="practice-header__top">
-        <button type="button" class="back-btn" @click="emit('back')">‹</button>
+        <button type="button" class="back-btn" @click="appService.goBack()">‹</button>
         <span class="practice-header__title">{{ quizState.currentPracticeTask.progressLabel }}</span>
         <div class="practice-actions">
           <BaseButton

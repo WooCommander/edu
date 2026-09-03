@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { appService } from '@/app/services/app-service'
 import { onMounted } from 'vue'
 import { dashboardState } from '../state/dashboard.state'
 import { dashboardService } from '../services/dashboard.service'
@@ -23,16 +24,16 @@ onMounted(async () => {
 function handleTaskClick(task: DailyTaskUIModel): void {
   if (!task.articleId) return
   if (task.type === 'test') {
-    emit('openQuiz', task.articleId)
+    appService.openQuiz(task.articleId)
   } else if (task.type === 'practice') {
-    emit('openPractice', task.articleId)
+    appService.openPractice(task.articleId)
   } else {
-    emit('openArticle', task.articleId)
+    appService.openArticle(task.articleId)
   }
 }
 
 function handleRecentClick(item: RecentStudyUIModel): void {
-  emit('openArticle', item.articleId)
+  appService.openArticle(item.articleId)
 }
 </script>
 
@@ -63,7 +64,7 @@ function handleRecentClick(item: RecentStudyUIModel): void {
       <div class="dashboard-view__col">
         <ContinueStudyCard
           :item="dashboardState.continueStudy"
-          @continue="(id) => emit('openArticle', id)"
+          @continue="(id) => appService.openArticle(id)"
         />
 
         <DailyTaskList
@@ -76,7 +77,7 @@ function handleRecentClick(item: RecentStudyUIModel): void {
         <RecentStudiesList
           :items="dashboardState.recentStudies"
           @select-item="handleRecentClick"
-          @view-all="emit('openTree')"
+          @view-all="appService.openTree()"
         />
       </div>
     </div>

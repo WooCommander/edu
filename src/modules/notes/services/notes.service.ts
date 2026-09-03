@@ -15,6 +15,11 @@ class NotesService {
     }
   }
 
+  
+  public toggleNoteModal(forceState?: boolean): void {
+    notesState.isNoteModalOpen = forceState !== undefined ? forceState : !notesState.isNoteModalOpen
+  }
+
   public setActiveTab(tab: 'all' | 'current' | 'related'): void {
     notesState.activeTab = tab
   }

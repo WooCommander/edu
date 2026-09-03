@@ -3,7 +3,7 @@ import { onMounted } from 'vue'
 import { isSupabaseConfigured } from '@/api/supabase'
 import { AuthView, authService, authState } from '@/modules/auth'
 import { appState } from '@/app/state/app-state'
-import MainLayout from '@/shared/ui/layout/MainLayout.vue'
+import MainLayout from '@/app/ui/layout/MainLayout.vue'
 
 onMounted(() => {
   void authService.init()

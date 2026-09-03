@@ -149,6 +149,7 @@ export const mockKnowledgeTree: TreeNodeDTO = {
                       title: 'Основы',
                       level: 6,
                       has_article: true,
+                      article_id: 'article_watch',
                       children_count: 0
                     },
                     {
@@ -157,6 +158,7 @@ export const mockKnowledgeTree: TreeNodeDTO = {
                       title: 'Параметры',
                       level: 6,
                       has_article: true,
+                      article_id: 'article_watch',
                       children_count: 0
                     },
                     {
@@ -165,6 +167,7 @@ export const mockKnowledgeTree: TreeNodeDTO = {
                       title: 'Глубокое наблюдение',
                       level: 6,
                       has_article: true,
+                      article_id: 'article_watch',
                       children_count: 0
                     },
                     {
@@ -173,6 +176,7 @@ export const mockKnowledgeTree: TreeNodeDTO = {
                       title: 'immediate и once',
                       level: 6,
                       has_article: true,
+                      article_id: 'article_watch',
                       children_count: 0
                     },
                     {
@@ -181,6 +185,7 @@ export const mockKnowledgeTree: TreeNodeDTO = {
                       title: 'flush: pre / post / sync',
                       level: 6,
                       has_article: true,
+                      article_id: 'article_watch',
                       children_count: 0
                     }
                   ]
@@ -191,6 +196,7 @@ export const mockKnowledgeTree: TreeNodeDTO = {
                   title: 'watchEffect',
                   level: 5,
                   has_article: true,
+                  article_id: 'article_watch',
                   children_count: 2,
                   children: [
                     {
@@ -199,6 +205,7 @@ export const mockKnowledgeTree: TreeNodeDTO = {
                       title: 'Основы',
                       level: 6,
                       has_article: true,
+                      article_id: 'article_watch',
                       children_count: 0
                     },
                     {
@@ -207,6 +214,7 @@ export const mockKnowledgeTree: TreeNodeDTO = {
                       title: 'Примеры',
                       level: 6,
                       has_article: true,
+                      article_id: 'article_watch',
                       children_count: 0
                     }
                   ]
@@ -217,6 +225,7 @@ export const mockKnowledgeTree: TreeNodeDTO = {
                   title: 'Практические примеры',
                   level: 5,
                   has_article: true,
+                  article_id: 'article_watch',
                   children_count: 0
                 }
               ]
@@ -836,6 +845,30 @@ export const mockLearningStats: LearningStatsDTO = {
     { category_id: 'history', title: 'История', progress_percent: 30 },
     { category_id: 'garden', title: 'Сад и растения', progress_percent: 20 }
   ]
+}
+export const mockLearningStatsByPeriod: Record<string, LearningStatsDTO> = {
+  'За неделю': mockLearningStats,
+  'За месяц': {
+    ...mockLearningStats,
+    period: 'За месяц',
+    articles_studied: 112,
+    study_time_formatted: '28ч 15м',
+    tests_completed: 45
+  },
+  'За год': {
+    ...mockLearningStats,
+    period: 'За год',
+    articles_studied: 420,
+    study_time_formatted: '150ч 30м',
+    tests_completed: 180
+  },
+  'За всё время': {
+    ...mockLearningStats,
+    period: 'За всё время',
+    articles_studied: 850,
+    study_time_formatted: '320ч 45м',
+    tests_completed: 340
+  }
 }
 
 export const mockKnowledgeGraph: KnowledgeGraphDTO = {

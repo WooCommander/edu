@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { appService } from '@/app/services/app-service'
+import { onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { BaseBadge, CodeBlock } from '@/shared/ui'
 import { knowledgeService } from '../services/knowledge.service'
@@ -17,10 +18,19 @@ const emit = defineEmits<{
   (e: 'prevPage'): void
 }>()
 
-onMounted(async () => {
-  if (knowledgeState.currentArticle?.id !== (route.params.id as string || 'article_watch')) {
-    await knowledgeService.loadArticle((route.params.id as string || 'article_watch'))
+async function loadArticleData() {
+  const routeId = route.params.id as string || 'article_watch'
+  if (knowledgeState.currentArticle?.id !== routeId) {
+    await knowledgeService.loadArticle(routeId)
   }
+}
+
+onMounted(() => {
+  loadArticleData()
+})
+
+watch(() => route.params.id, () => {
+  loadArticleData()
 })
 </script>
 
@@ -33,7 +43,7 @@ onMounted(async () => {
           type="button"
           class="nav-back-btn"
           aria-label="Назад"
-          @click="emit('back')"
+          @click="appService.goBack()"
         >
           ‹
         </button>
@@ -58,7 +68,7 @@ onMounted(async () => {
           type="button"
           class="icon-action-btn"
           title="Заметки к статье"
-          @click="emit('openNotes')"
+          @click="appService.toggleNoteModal(true)"
         >
           📝
         </button>
@@ -67,7 +77,7 @@ onMounted(async () => {
           type="button"
           class="icon-action-btn"
           title="Содержание статьи"
-          @click="emit('openToc')"
+          @click="appService.toggleToc(true)"
         >
           📑
         </button>
@@ -76,7 +86,7 @@ onMounted(async () => {
           type="button"
           class="icon-action-btn"
           title="Режим чтения без отвлечений"
-          @click="emit('openZen')"
+          @click="appService.openZenMode()"
         >
           Aa
         </button>
@@ -121,7 +131,7 @@ onMounted(async () => {
           <button
             type="button"
             class="action-pill"
-            @click="emit('openNotes')"
+            @click="appService.toggleNoteModal(true)"
           >
             <span>✏️</span>
             <span>Заметка</span>
@@ -189,7 +199,7 @@ onMounted(async () => {
         <button type="button" class="react-btn" @click="knowledgeService.toggleLike()">
           👍 {{ knowledgeState.currentArticle.likesCount }}
         </button>
-        <button type="button" class="react-btn" @click="emit('openNotes')">
+        <button type="button" class="react-btn" @click="appService.toggleNoteModal(true)">
           💬 {{ knowledgeState.currentArticle.commentsCount }}
         </button>
       </div>
