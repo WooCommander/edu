@@ -1,18 +1,11 @@
 import { apiClient } from '@/api'
-import { isSupabaseConfigured, supabase } from '@/api/supabase'
+import { supabase } from '@/api/supabase'
 import { appService } from '@/app/services/app-service'
 import { authState } from '../state/auth.state'
 import type { AuthFormMode } from '../state/auth.state'
 
 class AuthService {
   public async init(): Promise<void> {
-    if (!isSupabaseConfigured) {
-      // Offline/demo mode: no real backend configured, stay signed out of
-      // real auth but let the app run against mock-data without a gate.
-      authState.isInitializing = false
-      return
-    }
-
     const { data } = await supabase.auth.getSession()
     if (data.session) {
       await this.loadProfile()
@@ -48,7 +41,6 @@ class AuthService {
   }
 
   public async signOut(): Promise<void> {
-    if (!isSupabaseConfigured) return
     await supabase.auth.signOut()
   }
 

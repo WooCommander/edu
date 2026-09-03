@@ -1,18 +1,4 @@
-import { isSupabaseConfigured, supabase } from './supabase'
-import {
-  mockArticles,
-  mockContinueItem,
-  mockDailyTasks,
-  mockKnowledgeGraph,
-  mockKnowledgeTree,
-  mockLearningStats,
-  mockLearningStatsByPeriod,
-  mockNotes,
-  mockPracticeTask,
-  mockQuizQuestions,
-  mockRecentStudies,
-  mockUser
-} from './mock-data'
+import { supabase } from './supabase'
 import type { ArticleDTO, ArticleSectionDTO, TreeNodeDTO } from './types/knowledge.dto'
 import type { ContinueStudyItemDTO, DailyTaskDTO, LearningStatsDTO, RecentStudyDTO } from './types/learning.dto'
 import type { NoteDTO } from './types/notes.dto'
@@ -107,9 +93,7 @@ function flattenSections(sections: ArticleSectionDTO[]): ArticleSectionDTO[] {
 
 export const apiClient = {
   async getUserProfile(): Promise<UserProfile> {
-    if (!isSupabaseConfigured) return Promise.resolve({ ...mockUser })
-
-    const userId = await getCurrentUserId()
+        const userId = await getCurrentUserId()
     const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
     if (error || !data) throw error ?? new Error('Профиль пользователя не найден.')
 
@@ -117,9 +101,7 @@ export const apiClient = {
   },
 
   async getContinueStudyItem(): Promise<ContinueStudyItemDTO> {
-    if (!isSupabaseConfigured) return Promise.resolve({ ...mockContinueItem })
-
-    const userId = await getCurrentUserId()
+        const userId = await getCurrentUserId()
     const { data, error } = await supabase.from('continue_study').select('*').eq('user_id', userId).maybeSingle()
     if (error) throw error
     if (!data) throw new Error('Нет записи "продолжить обучение" для пользователя в таблице continue_study.')
@@ -128,9 +110,7 @@ export const apiClient = {
   },
 
   async getDailyTasks(): Promise<DailyTaskDTO[]> {
-    if (!isSupabaseConfigured) return Promise.resolve([...mockDailyTasks])
-
-    const userId = await getCurrentUserId()
+        const userId = await getCurrentUserId()
     const today = new Date().toISOString().slice(0, 10)
     const { data, error } = await supabase
       .from('daily_tasks')
@@ -143,9 +123,7 @@ export const apiClient = {
   },
 
   async getRecentStudies(): Promise<RecentStudyDTO[]> {
-    if (!isSupabaseConfigured) return Promise.resolve([...mockRecentStudies])
-
-    const userId = await getCurrentUserId()
+        const userId = await getCurrentUserId()
     const { data, error } = await supabase
       .from('recent_studies')
       .select('*')
@@ -164,9 +142,7 @@ export const apiClient = {
   },
 
   async getKnowledgeTree(): Promise<TreeNodeDTO> {
-    if (!isSupabaseConfigured) return Promise.resolve(JSON.parse(JSON.stringify(mockKnowledgeTree)))
-
-    const userId = await getCurrentUserId()
+        const userId = await getCurrentUserId()
     const [{ data: rows, error: rowsError }, { data: progressRows, error: progressError }] = await Promise.all([
       supabase.from('tree_nodes').select('*').order('sort_order', { ascending: true }),
       supabase.from('tree_node_progress').select('tree_node_id').eq('user_id', userId)
@@ -239,9 +215,7 @@ export const apiClient = {
   },
 
   async getNotesByArticleId(articleId?: string): Promise<NoteDTO[]> {
-    if (!isSupabaseConfigured) return Promise.resolve([...mockNotes])
-
-    const userId = await getCurrentUserId()
+        const userId = await getCurrentUserId()
     const query = supabase.from('notes').select('*').eq('user_id', userId).order('created_at', { ascending: false })
     const { data, error } = await (articleId ? query.eq('article_id', articleId) : query)
     if (error) throw error
@@ -298,9 +272,7 @@ export const apiClient = {
   },
 
   async getQuizQuestionsByArticleId(articleId: string): Promise<QuizQuestionDTO[]> {
-    if (!isSupabaseConfigured) return Promise.resolve([...mockQuizQuestions])
-
-    const { data, error } = await supabase
+        const { data, error } = await supabase
       .from('quiz_questions')
       .select('*')
       .eq('article_id', articleId)
@@ -311,9 +283,7 @@ export const apiClient = {
   },
 
   async getPracticeTaskByArticleId(articleId: string): Promise<PracticeTaskDTO> {
-    if (!isSupabaseConfigured) return Promise.resolve({ ...mockPracticeTask })
-
-    const { data, error } = await supabase
+        const { data, error } = await supabase
       .from('practice_tasks')
       .select('*')
       .eq('article_id', articleId)
@@ -357,9 +327,7 @@ export const apiClient = {
   },
 
   async getKnowledgeGraph(): Promise<KnowledgeGraphDTO> {
-    if (!isSupabaseConfigured) return Promise.resolve(JSON.parse(JSON.stringify(mockKnowledgeGraph)))
-
-    const { data: graph, error: graphError } = await supabase.from('knowledge_graphs').select('*').limit(1).maybeSingle()
+        const { data: graph, error: graphError } = await supabase.from('knowledge_graphs').select('*').limit(1).maybeSingle()
     if (graphError) throw graphError
     if (!graph) throw new Error('Граф знаний не найден в таблице knowledge_graphs.')
 
