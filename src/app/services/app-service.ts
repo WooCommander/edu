@@ -2,7 +2,7 @@ import { appState } from '../state/app-state'
 import type { ActiveScreen, NavTab, UserProfile } from '@/shared/types'
 
 class AppService {
-  public setUser(user: UserProfile): void {
+  public setUser(user: UserProfile | null): void {
     appState.user = user
   }
 

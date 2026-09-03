@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { appState } from '@/app/state/app-state'
 import { BaseButton, BaseProgressBar } from '@/shared/ui'
 import { quizService } from '../services/quiz.service'
 import { quizState } from '../state/quiz.state'
@@ -10,8 +11,8 @@ const emit = defineEmits<{
 }>()
 
 onMounted(async () => {
-  if (!quizState.currentQuestion) {
-    await quizService.loadQuizQuestion()
+  if (quizState.currentQuestion?.articleId !== appState.selectedArticleId) {
+    await quizService.loadQuizQuestion(appState.selectedArticleId)
   }
 })
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { appState } from '@/app/state/app-state'
 import { BaseBadge, CodeBlock } from '@/shared/ui'
 import { knowledgeService } from '../services/knowledge.service'
 import { knowledgeState } from '../state/knowledge.state'
@@ -15,8 +16,8 @@ const emit = defineEmits<{
 }>()
 
 onMounted(async () => {
-  if (!knowledgeState.currentArticle) {
-    await knowledgeService.loadArticle()
+  if (knowledgeState.currentArticle?.id !== appState.selectedArticleId) {
+    await knowledgeService.loadArticle(appState.selectedArticleId)
   }
 })
 </script>
@@ -151,8 +152,7 @@ onMounted(async () => {
           <CodeBlock
             v-else-if="block.type === 'code'"
             :code="block.content"
-            :language="block.language || 'typescript'"
-            title="Пример (Vue 3)"
+            :language="block.language || 'text'"
           />
 
           <!-- Callout box -->

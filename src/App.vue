@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { appService } from '@/app/services/app-service'
 import { appState } from '@/app/state/app-state'
+import { isSupabaseConfigured } from '@/api/supabase'
 import { BottomNavigation } from '@/shared/ui'
 import type { ActiveScreen, NavTab } from '@/shared/types'
 
 // Modules UI imports
+import { AuthView, authService, authState } from '@/modules/auth'
 import { DashboardView } from '@/modules/dashboard'
 import {
   ArticleReaderView,
@@ -46,6 +48,10 @@ const menuItems: MenuItem[] = [
 
 const shouldShowBottomNav = computed(() => {
   return !['zen'].includes(appState.activeScreen)
+})
+
+const shouldShowArticleBreadcrumbs = computed(() => {
+  return ['article', 'zen', 'notes', 'quiz', 'practice'].includes(appState.activeScreen)
 })
 
 function handleNavigate(item: MenuItem): void {
@@ -100,10 +106,26 @@ function handleBack(): void {
     appService.navigateToTab('dashboard')
   }
 }
+
+async function handleSignOut(): Promise<void> {
+  isMobileSidebarOpen.value = false
+  await authService.signOut()
+}
+
+onMounted(() => {
+  void authService.init()
+})
 </script>
 
 <template>
-  <div class="main-app-container">
+  <!-- Auth gate: only meaningful when a real Supabase project is configured -->
+  <div v-if="isSupabaseConfigured && authState.isInitializing" class="auth-loading-screen">
+    <span class="auth-loading-spinner" />
+  </div>
+
+  <AuthView v-else-if="isSupabaseConfigured && !appState.user" />
+
+  <div v-else class="main-app-container">
     <!-- Backdrop for mobile sidebar drawer -->
     <Transition name="fade">
       <div
@@ -195,13 +217,23 @@ function handleBack(): void {
         <div class="user-card">
           <img
             class="user-avatar"
-            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-            alt="Сергей"
+            :src="appState.user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'"
+            :alt="appState.user?.name || 'Профиль'"
           />
           <div class="user-details">
-            <strong class="user-name">Сергей</strong>
+            <strong class="user-name">{{ appState.user?.name || 'Гость' }}</strong>
             <span class="user-status">Изучает Vue 3</span>
           </div>
+          <button
+            v-if="isSupabaseConfigured"
+            type="button"
+            class="sign-out-btn"
+            title="Выйти"
+            aria-label="Выйти"
+            @click="handleSignOut"
+          >
+            ⏻
+          </button>
         </div>
       </div>
     </aside>
@@ -227,14 +259,16 @@ function handleBack(): void {
             {{ appState.activeScreen.toUpperCase() }}
           </span>
 
-          <div class="desktop-breadcrumbs">
-            <span>Vue 3</span>
-            <span class="sep">/</span>
-            <span>Основы</span>
-            <span class="sep">/</span>
-            <span>Реактивность</span>
-            <span class="sep">/</span>
-            <span class="active">watch и watchEffect</span>
+          <div v-if="shouldShowArticleBreadcrumbs && knowledgeState.currentArticle" class="desktop-breadcrumbs">
+            <template
+              v-for="(crumb, index) in knowledgeState.currentArticle.categoryPathArray"
+              :key="crumb"
+            >
+              <span class="sep" v-if="index > 0">/</span>
+              <span :class="{ active: index === knowledgeState.currentArticle.categoryPathArray.length - 1 }">
+                {{ crumb }}
+              </span>
+            </template>
           </div>
         </div>
 
@@ -363,6 +397,30 @@ function handleBack(): void {
 </template>
 
 <style scoped lang="scss">
+.auth-loading-screen {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+}
+
+.auth-loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid #e0e7ff;
+  border-right-color: #6366f1;
+  border-radius: 50%;
+  animation: auth-spin 0.65s linear infinite;
+}
+
+@keyframes auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .main-app-container {
   display: flex;
   width: 100%;
@@ -616,6 +674,24 @@ function handleBack(): void {
   .user-status {
     font-size: 0.75rem;
     color: #64748b;
+  }
+
+  .sign-out-btn {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: #fee2e2;
+      color: #ef4444;
+    }
   }
 }
 

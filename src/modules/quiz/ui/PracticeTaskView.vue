@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { appState } from '@/app/state/app-state'
 import { BaseButton, BaseTabs } from '@/shared/ui'
 import type { TabItem } from '@/shared/ui'
 import { quizService } from '../services/quiz.service'
@@ -16,8 +17,8 @@ const practiceTabs: TabItem[] = [
 ]
 
 onMounted(async () => {
-  if (!quizState.currentPracticeTask) {
-    await quizService.loadPracticeTask()
+  if (quizState.currentPracticeTask?.articleId !== appState.selectedArticleId) {
+    await quizService.loadPracticeTask(appState.selectedArticleId)
   }
 })
 

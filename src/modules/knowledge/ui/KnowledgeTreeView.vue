@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { BaseButton } from '@/shared/ui'
 import { knowledgeService } from '../services/knowledge.service'
 import { knowledgeState } from '../state/knowledge.state'
@@ -18,6 +18,24 @@ onMounted(async () => {
   }
 })
 
+function findPathTo(node: TreeNodeUIModel, targetId: string, path: string[]): boolean {
+  const isRealNode = node.level > 0
+  if (isRealNode) path.push(node.title)
+  if (node.id === targetId) return true
+  for (const child of node.children) {
+    if (findPathTo(child, targetId, path)) return true
+  }
+  if (isRealNode) path.pop()
+  return false
+}
+
+const breadcrumbPath = computed<string[]>(() => {
+  if (!knowledgeState.tree || !knowledgeState.selectedNodeId) return []
+  const path: string[] = []
+  findPathTo(knowledgeState.tree, knowledgeState.selectedNodeId, path)
+  return path
+})
+
 function handleSelectNode(node: TreeNodeUIModel): void {
   knowledgeService.setSelectedNode(node.id)
   if (node.hasArticle && node.articleId) {
@@ -30,14 +48,14 @@ function handleSelectNode(node: TreeNodeUIModel): void {
   <div class="tree-view">
     <!-- Breadcrumbs header bar -->
     <header class="tree-view__header">
-      <div class="tree-view__breadcrumbs">
-        <span class="crumb">Vue 3</span>
-        <span class="sep">›</span>
-        <span class="crumb">Основы</span>
-        <span class="sep">›</span>
-        <span class="crumb">Реактивность</span>
-        <span class="sep">›</span>
-        <span class="crumb active">watch и wa...</span>
+      <div v-if="breadcrumbPath.length > 0" class="tree-view__breadcrumbs">
+        <template v-for="(crumb, index) in breadcrumbPath" :key="index">
+          <span v-if="index > 0" class="sep">›</span>
+          <span class="crumb" :class="{ active: index === breadcrumbPath.length - 1 }">{{ crumb }}</span>
+        </template>
+      </div>
+      <div v-else class="tree-view__breadcrumbs">
+        <span class="crumb">Выберите раздел ниже</span>
       </div>
     </header>
 
