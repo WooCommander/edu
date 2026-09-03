@@ -79,7 +79,7 @@ function handleVerify(): void {
 
           <div class="hints-box">
             <strong>💡 Подсказка:</strong>
-            <p>Используйте watch с двумя аргументами колбэка: <code>(newVal, oldVal) => ...</code></p>
+            <p>Разбейте задачу на шаги из списка требований выше и проверяйте каждый по отдельности.</p>
           </div>
         </div>
       </div>

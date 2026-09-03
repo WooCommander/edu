@@ -15,6 +15,7 @@ export interface DailyTaskUIModel {
   subtitle: string
   badgeCount: number
   isCompleted: boolean
+  articleId?: string
 }
 
 export interface RecentStudyUIModel {
@@ -22,6 +23,7 @@ export interface RecentStudyUIModel {
   title: string
   timeAgo: string
   durationText: string
+  articleId: string
 }
 
 export function adaptContinueStudy(dto: ContinueStudyItemDTO): ContinueStudyUIModel {
@@ -41,7 +43,8 @@ export function adaptDailyTask(dto: DailyTaskDTO): DailyTaskUIModel {
     title: dto.title,
     subtitle: dto.subtitle,
     badgeCount: dto.count_badge,
-    isCompleted: dto.is_completed
+    isCompleted: dto.is_completed,
+    articleId: dto.article_id
   }
 }
 
@@ -50,6 +53,7 @@ export function adaptRecentStudy(dto: RecentStudyDTO): RecentStudyUIModel {
     id: dto.id,
     title: dto.title,
     timeAgo: dto.time_ago,
-    durationText: `${dto.duration_minutes} мин`
+    durationText: `${dto.duration_minutes} мин`,
+    articleId: dto.article_id
   }
 }

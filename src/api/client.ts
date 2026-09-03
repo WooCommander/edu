@@ -17,6 +17,7 @@ import type { ContinueStudyItemDTO, DailyTaskDTO, LearningStatsDTO, RecentStudyD
 import type { NoteDTO } from './types/notes.dto'
 import type { PracticeTaskDTO, QuizQuestionDTO } from './types/quiz.dto'
 import type { KnowledgeGraphDTO } from './types/knowledge-map.dto'
+import type { SearchResultDTO } from './types/search.dto'
 import type { ArticleSectionRow, TreeNodeRow } from './database.types'
 import type { UserProfile } from '@/shared/types'
 import { formatRelativeDayLabel } from '@/shared/lib/formatters'
@@ -94,6 +95,15 @@ function buildArticleSections(rows: ArticleSectionRow[], readMap: Map<string, bo
   return roots
 }
 
+function flattenSections(sections: ArticleSectionDTO[]): ArticleSectionDTO[] {
+  const flat: ArticleSectionDTO[] = []
+  for (const section of sections) {
+    flat.push(section)
+    if (section.children) flat.push(...flattenSections(section.children))
+  }
+  return flat
+}
+
 export const apiClient = {
   async getUserProfile(): Promise<UserProfile> {
     if (!isSupabaseConfigured) return Promise.resolve({ ...mockUser })
@@ -128,7 +138,7 @@ export const apiClient = {
       .eq('task_date', today)
     if (error) throw error
 
-    return data ?? []
+    return (data ?? []).map(row => ({ ...row, article_id: row.article_id ?? undefined }))
   },
 
   async getRecentStudies(): Promise<RecentStudyDTO[]> {
@@ -147,7 +157,8 @@ export const apiClient = {
       id: row.id,
       title: row.title,
       time_ago: formatRelativeDayLabel(row.studied_at),
-      duration_minutes: row.duration_minutes
+      duration_minutes: row.duration_minutes,
+      article_id: row.article_id
     }))
   },
 
@@ -215,7 +226,8 @@ export const apiClient = {
         content: row.content,
         language: row.language ?? undefined,
         level: row.level ?? undefined,
-        callout_type: row.callout_type ?? undefined
+        callout_type: row.callout_type ?? undefined,
+        alt_text: row.alt_text ?? undefined
       })),
       likes_count: article.likes_count,
       comments_count: article.comments_count,
@@ -367,5 +379,114 @@ export const apiClient = {
       })),
       edges: (edges ?? []).map(edge => ({ source_id: edge.source_id, target_id: edge.target_id }))
     }
+  },
+
+  async searchContent(query: string): Promise<SearchResultDTO[]> {
+    const q = query.trim().toLowerCase()
+    if (!q) return []
+
+    if (!isSupabaseConfigured) {
+      const results: SearchResultDTO[] = []
+
+      for (const article of Object.values(mockArticles)) {
+        if (article.title.toLowerCase().includes(q) || article.tags.some(tag => tag.toLowerCase().includes(q))) {
+          results.push({
+            id: `article_${article.id}`,
+            title: article.title,
+            category_path: article.category_path.join(' › '),
+            snippet_text: '',
+            entity_type: 'article',
+            article_id: article.id
+          })
+        }
+        for (const section of flattenSections(article.sections)) {
+          if (section.title.toLowerCase().includes(q)) {
+            results.push({
+              id: `section_${section.id}`,
+              title: section.title,
+              category_path: `${article.category_path.join(' › ')} › ${article.title}`,
+              snippet_text: '',
+              entity_type: 'section',
+              article_id: article.id
+            })
+          }
+        }
+      }
+
+      for (const note of mockNotes) {
+        if (note.quote_text.toLowerCase().includes(q) || (note.user_comment ?? '').toLowerCase().includes(q)) {
+          results.push({
+            id: `note_${note.id}`,
+            title: note.quote_text.length > 70 ? `${note.quote_text.slice(0, 70)}…` : note.quote_text,
+            category_path: 'Заметка',
+            snippet_text: note.user_comment ?? '',
+            entity_type: 'note',
+            article_id: note.article_id
+          })
+        }
+      }
+
+      return results.slice(0, 20)
+    }
+
+    const userId = await getCurrentUserId()
+    const [{ data: articleRows, error: articleError }, { data: sectionRows, error: sectionError }, { data: noteRows, error: noteError }] =
+      await Promise.all([
+        supabase.from('articles').select('id, title, category_path').ilike('title', `%${query}%`).limit(10),
+        supabase.from('article_sections').select('id, title, article_id').ilike('title', `%${query}%`).limit(10),
+        supabase
+          .from('notes')
+          .select('id, quote_text, user_comment, article_id')
+          .eq('user_id', userId)
+          .ilike('quote_text', `%${query}%`)
+          .limit(10)
+      ])
+    if (articleError) throw articleError
+    if (sectionError) throw sectionError
+    if (noteError) throw noteError
+
+    const results: SearchResultDTO[] = (articleRows ?? []).map(row => ({
+      id: `article_${row.id}`,
+      title: row.title,
+      category_path: row.category_path.join(' › '),
+      snippet_text: '',
+      entity_type: 'article' as const,
+      article_id: row.id
+    }))
+
+    if (sectionRows && sectionRows.length > 0) {
+      const parentIds = [...new Set(sectionRows.map(row => row.article_id))]
+      const { data: parentArticles, error: parentError } = await supabase
+        .from('articles')
+        .select('id, title, category_path')
+        .in('id', parentIds)
+      if (parentError) throw parentError
+
+      const parentById = new Map((parentArticles ?? []).map(row => [row.id, row]))
+      for (const section of sectionRows) {
+        const parent = parentById.get(section.article_id)
+        results.push({
+          id: `section_${section.id}`,
+          title: section.title,
+          category_path: parent ? `${parent.category_path.join(' › ')} › ${parent.title}` : '',
+          snippet_text: '',
+          entity_type: 'section',
+          article_id: section.article_id
+        })
+      }
+    }
+
+    for (const note of noteRows ?? []) {
+      results.push({
+        id: `note_${note.id}`,
+        title: note.quote_text.length > 70 ? `${note.quote_text.slice(0, 70)}…` : note.quote_text,
+        category_path: 'Заметка',
+        snippet_text: note.user_comment ?? '',
+        entity_type: 'note',
+        article_id: note.article_id
+      })
+    }
+
+    return results
   }
 }

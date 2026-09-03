@@ -39,41 +39,48 @@ const fontSizeClasses = ['zen-text--normal', 'zen-text--large', 'zen-text--xl']
 
     <!-- Zen Article Content -->
     <main class="zen-content">
-      <h1 class="zen-title">watch</h1>
+      <h1 class="zen-title">{{ knowledgeState.currentArticle.title }}</h1>
 
-      <p class="zen-p">
-        watch отслеживает конкретные источники данных и запускает колбэк при их изменении.
-      </p>
+      <template v-for="block in knowledgeState.currentArticle.blocks" :key="block.id">
+        <h2 v-if="block.type === 'heading'" class="zen-heading">{{ block.content }}</h2>
 
-      <CodeBlock
-        code="import { ref, watch } from 'vue'
+        <p v-else-if="block.type === 'paragraph'" class="zen-p">{{ block.content }}</p>
 
-const count = ref(0)
+        <CodeBlock
+          v-else-if="block.type === 'code'"
+          :code="block.content"
+          :language="block.language || 'text'"
+        />
 
-watch(count, (newVal, oldVal) => {
-  console.log('Изменилось:', oldVal, '->', newVal)
-})"
-        language="javascript"
-      />
+        <ul v-else-if="block.type === 'list'" class="zen-list">
+          <li v-for="(item, itemIndex) in block.content.split('\n').filter(Boolean)" :key="itemIndex">
+            {{ item }}
+          </li>
+        </ul>
 
-      <div class="zen-callout">
-        <span class="zen-callout__icon">💡</span>
-        <div class="zen-callout__body">
-          <strong>Важно</strong>
-          <p>По умолчанию watch вызывается только после первого изменения, а не сразу.</p>
+        <figure v-else-if="block.type === 'image'" class="zen-figure">
+          <img :src="block.content" :alt="block.altText || ''" class="zen-image" />
+          <figcaption v-if="block.altText" class="zen-image-caption">{{ block.altText }}</figcaption>
+        </figure>
+
+        <div v-else-if="block.type === 'callout'" class="zen-callout">
+          <span class="zen-callout__icon">💡</span>
+          <div class="zen-callout__body">
+            <p>{{ block.content }}</p>
+          </div>
         </div>
-      </div>
+      </template>
     </main>
 
     <!-- Zen Footer with Progress Bar Line -->
     <footer class="zen-footer">
       <div class="zen-footer__nav">
         <button type="button" class="zen-nav-arrow">‹</button>
-        <span class="zen-page-count">6 из 28</span>
+        <span class="zen-page-count">{{ knowledgeState.currentArticle.progressText }}</span>
         <button type="button" class="zen-nav-arrow">›</button>
       </div>
       <div class="zen-line-track">
-        <div class="zen-line-bar" style="width: 25%" />
+        <div class="zen-line-bar" :style="{ width: `${knowledgeState.currentArticle.progressPercent}%` }" />
       </div>
     </footer>
   </div>
@@ -147,10 +154,52 @@ watch(count, (newVal, oldVal) => {
   color: #0f172a;
 }
 
+.zen-heading {
+  font-size: 1.4em;
+  font-weight: 700;
+  margin: 0.5rem 0 0;
+  color: #0f172a;
+}
+
 .zen-p {
   line-height: 1.7;
   color: #334155;
   margin: 0;
+}
+
+.zen-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  line-height: 1.6;
+  color: #334155;
+}
+
+.zen-figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.zen-image {
+  display: block;
+  width: min(340px, 100%);
+  height: auto;
+  max-height: 420px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.zen-image-caption {
+  font-size: 0.8em;
+  color: #64748b;
+  text-align: center;
 }
 
 .zen-callout {

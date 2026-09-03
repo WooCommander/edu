@@ -14,6 +14,7 @@ export interface DailyTaskDTO {
   subtitle: string
   count_badge: number
   is_completed: boolean
+  article_id?: string
 }
 
 export interface RecentStudyDTO {
@@ -21,6 +22,7 @@ export interface RecentStudyDTO {
   title: string
   time_ago: string
   duration_minutes: number
+  article_id: string
 }
 
 export interface CategoryProgressDTO {

@@ -33,7 +33,7 @@ function handleOptionClick(key: string): void {
       </div>
 
       <div class="quiz-header__progress">
-        <BaseProgressBar :value="60" color="#6366f1" :height="4" />
+        <BaseProgressBar :value="quizState.currentQuestion.progressPercent" color="#6366f1" :height="4" />
       </div>
     </header>
 

@@ -61,11 +61,12 @@ export type ArticleBlockRow = {
   id: string
   article_id: string
   sort_order: number
-  type: 'paragraph' | 'heading' | 'code' | 'callout' | 'list'
+  type: 'paragraph' | 'heading' | 'code' | 'callout' | 'list' | 'image'
   content: string
   language: string | null
   level: number | null
   callout_type: 'info' | 'warning' | 'success' | null
+  alt_text: string | null
 }
 
 export type QuizQuestionRow = {
@@ -161,6 +162,7 @@ export type DailyTaskRow = {
   count_badge: number
   is_completed: boolean
   task_date: string
+  article_id: string | null
 }
 
 export type RecentStudyRow = {
@@ -169,6 +171,7 @@ export type RecentStudyRow = {
   title: string
   studied_at: string
   duration_minutes: number
+  article_id: string
 }
 
 export type LearningStatsRow = {

@@ -83,11 +83,12 @@ create table public.article_blocks (
   id text primary key,
   article_id text not null references public.articles (id) on delete cascade,
   sort_order int not null,
-  type text not null check (type in ('paragraph', 'heading', 'code', 'callout', 'list')),
-  content text not null,
+  type text not null check (type in ('paragraph', 'heading', 'code', 'callout', 'list', 'image')),
+  content text not null, -- for 'list': one item per line; for 'image': the image URL
   language text,
   level int,
-  callout_type text check (callout_type in ('info', 'warning', 'success'))
+  callout_type text check (callout_type in ('info', 'warning', 'success')),
+  alt_text text -- for 'image': alt text / caption
 );
 create index article_blocks_article_id_idx on public.article_blocks (article_id);
 
@@ -216,7 +217,8 @@ create table public.daily_tasks (
   subtitle text not null,
   count_badge int not null default 0,
   is_completed boolean not null default false,
-  task_date date not null default current_date
+  task_date date not null default current_date,
+  article_id text references public.articles (id) on delete set null
 );
 create index daily_tasks_user_id_idx on public.daily_tasks (user_id);
 
@@ -225,7 +227,8 @@ create table public.recent_studies (
   user_id uuid not null references auth.users (id) on delete cascade,
   title text not null,
   studied_at timestamptz not null default now(),
-  duration_minutes int not null
+  duration_minutes int not null,
+  article_id text references public.articles (id) on delete cascade
 );
 create index recent_studies_user_id_idx on public.recent_studies (user_id);
 

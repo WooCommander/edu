@@ -1,5 +1,6 @@
 import { apiClient } from '@/api'
 import type { HighlightColor } from '@/api'
+import { appState } from '@/app/state/app-state'
 import { adaptNote } from '../adapters/notes.adapter'
 import { notesState } from '../state/notes.state'
 
@@ -26,7 +27,7 @@ class NotesService {
     quoteText: string,
     userComment: string,
     color: HighlightColor,
-    articleId: string = 'article_watch'
+    articleId: string = appState.selectedArticleId
   ): Promise<void> {
     const newNoteDto = await apiClient.addNote({
       article_id: articleId,

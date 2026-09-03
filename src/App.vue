@@ -18,7 +18,7 @@ import {
   ZenReaderView
 } from '@/modules/knowledge'
 import { GlobalSearchView } from '@/modules/search'
-import { NotesListView } from '@/modules/notes'
+import { NotesListView, notesState } from '@/modules/notes'
 import { PracticeTaskView, QuizView } from '@/modules/quiz'
 import { StatisticsView } from '@/modules/statistics'
 import { KnowledgeMapView } from '@/modules/knowledge-map'
@@ -40,7 +40,7 @@ const menuItems: MenuItem[] = [
   { screen: 'tree', label: 'Дерево тем', icon: '📁', badge: '10+ ур' },
   { screen: 'article', label: 'Чтение статьи', icon: '📄' },
   { screen: 'map', tab: 'map', label: 'Карта знаний', icon: '🌐' },
-  { screen: 'notes', tab: 'notes', label: 'Мои заметки', icon: '📓', badge: '3' },
+  { screen: 'notes', tab: 'notes', label: 'Мои заметки', icon: '📓' },
   { screen: 'quiz', label: 'Самопроверка (тест)', icon: '📝' },
   { screen: 'practice', label: 'Практика (код)', icon: '💻' },
   { screen: 'profile', tab: 'profile', label: 'Статистика', icon: '📊' }
@@ -182,7 +182,10 @@ onMounted(() => {
         >
           <span class="nav-icon">{{ item.icon }}</span>
           <span class="nav-label">{{ item.label }}</span>
-          <span v-if="item.badge" class="nav-badge">{{ item.badge }}</span>
+          <span v-if="item.screen === 'notes' && notesState.notes.length > 0" class="nav-badge">
+            {{ notesState.notes.length }}
+          </span>
+          <span v-else-if="item.badge" class="nav-badge">{{ item.badge }}</span>
         </button>
       </nav>
 
@@ -340,7 +343,7 @@ onMounted(() => {
         <QuizView
           v-else-if="appState.activeScreen === 'quiz'"
           @back="handleBack"
-          @next-question="() => appService.showToast('Переход к вопросу 4 из 5')"
+          @next-question="() => appService.showToast('В этой статье пока доступен только один вопрос для самопроверки')"
         />
 
         <!-- Screen 9: Practice Coding Task -->
@@ -377,6 +380,7 @@ onMounted(() => {
       :is-open="appState.isTocOpen"
       :sections="knowledgeState.currentArticle.sections"
       :selected-section-id="knowledgeState.selectedSectionId"
+      :progress-percent="knowledgeState.currentArticle.progressPercent"
       @close="appService.toggleToc(false)"
       @select-section="(secId) => { knowledgeState.selectedSectionId = secId; appService.toggleToc(false) }"
     />
@@ -384,7 +388,7 @@ onMounted(() => {
     <BreadcrumbPathModal
       :is-open="appState.isBreadcrumbsOpen"
       @close="appService.toggleBreadcrumbs(false)"
-      @go-to-article="() => { appService.toggleBreadcrumbs(false); handleOpenArticle('article_watch') }"
+      @go-to-article="(articleId) => { appService.toggleBreadcrumbs(false); handleOpenArticle(articleId) }"
     />
 
     <!-- Notification Toast -->

@@ -21,17 +21,18 @@ onMounted(async () => {
 })
 
 function handleTaskClick(task: DailyTaskUIModel): void {
+  if (!task.articleId) return
   if (task.type === 'test') {
-    emit('openQuiz', 'article_watch')
+    emit('openQuiz', task.articleId)
   } else if (task.type === 'practice') {
-    emit('openPractice', 'article_watch')
+    emit('openPractice', task.articleId)
   } else {
-    emit('openArticle', 'article_watch')
+    emit('openArticle', task.articleId)
   }
 }
 
-function handleRecentClick(_item: RecentStudyUIModel): void {
-  emit('openArticle', 'article_watch')
+function handleRecentClick(item: RecentStudyUIModel): void {
+  emit('openArticle', item.articleId)
 }
 </script>
 
@@ -43,7 +44,9 @@ function handleRecentClick(_item: RecentStudyUIModel): void {
         <h1 class="dashboard-header__greeting">
           {{ dashboardState.user?.greeting || 'Добрый вечер, Сергей!' }}
         </h1>
-        <p class="dashboard-header__sub">Продолжайте изучение темы «Реактивность в Vue 3»</p>
+        <p v-if="dashboardState.continueStudy" class="dashboard-header__sub">
+          Продолжайте изучение темы «{{ dashboardState.continueStudy.title }}»
+        </p>
       </div>
 
       <div class="dashboard-header__avatar-wrap">

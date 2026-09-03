@@ -36,7 +36,8 @@ export const mockDailyTasks: DailyTaskDTO[] = [
     title: 'Проверка знаний',
     subtitle: '2 теста',
     count_badge: 2,
-    is_completed: false
+    is_completed: false,
+    article_id: 'article_watch'
   },
   {
     id: 'task_practice',
@@ -44,28 +45,32 @@ export const mockDailyTasks: DailyTaskDTO[] = [
     title: 'Практическое задание',
     subtitle: 'Базовый проект на Vue',
     count_badge: 1,
-    is_completed: false
+    is_completed: false,
+    article_id: 'article_watch'
   }
 ]
 
 export const mockRecentStudies: RecentStudyDTO[] = [
   {
     id: 'recent_1',
-    title: 'ref и reactive',
+    title: 'watch и watchEffect',
     time_ago: 'Сегодня',
-    duration_minutes: 8
+    duration_minutes: 8,
+    article_id: 'article_watch'
   },
   {
     id: 'recent_2',
-    title: 'Компьютерные сети. Модели OSI',
+    title: 'Как быстро сесть на шпагат',
     time_ago: 'Вчера',
-    duration_minutes: 14
+    duration_minutes: 14,
+    article_id: 'article_split'
   },
   {
     id: 'recent_3',
-    title: 'История Рима. Республика',
+    title: 'Аккорды и табулатура',
     time_ago: '2 дня назад',
-    duration_minutes: 18
+    duration_minutes: 18,
+    article_id: 'article_guitar_chords'
   }
 ]
 
@@ -106,8 +111,7 @@ export const mockKnowledgeTree: TreeNodeDTO = {
               code: '1.1.1.',
               title: 'ref и reactive',
               level: 4,
-              has_article: true,
-              article_id: 'article_ref_reactive',
+              has_article: false,
               is_completed: true,
               children_count: 0
             },
@@ -116,8 +120,7 @@ export const mockKnowledgeTree: TreeNodeDTO = {
               code: '1.1.2.',
               title: 'computed',
               level: 4,
-              has_article: true,
-              article_id: 'article_computed',
+              has_article: false,
               is_completed: true,
               children_count: 0
             },
@@ -424,12 +427,24 @@ export const mockSplitArticle: ArticleDTO = {
       content:
         'Растягивает подколенные сухожилия задней ноги и сгибатели бедра передней ноги. Хорошо поддаётся тренировке с помощью выпадов и растяжки на одну ногу.'
     },
+    {
+      id: 'split_img_1',
+      type: 'image',
+      content: 'https://commons.wikimedia.org/wiki/Special:FilePath/2022-06-04_Ben_Schumacher_at_SMJ_Kunstturnen_2022_P5_All-around_competition_Warm-up_(Martin_Rulsch)_037.jpg',
+      alt_text: 'Продольный шпагат на разминке перед выступлением (спортивная гимнастика)'
+    },
     { id: 'split_b_6', type: 'heading', level: 3, content: 'Поперечный шпагат' },
     {
       id: 'split_b_7',
       type: 'paragraph',
       content:
         'Растягивает приводящие мышцы бедра (внутреннюю поверхность). Обычно осваивается медленнее продольного и требует более осторожного прогресса.'
+    },
+    {
+      id: 'split_img_2',
+      type: 'image',
+      content: 'https://commons.wikimedia.org/wiki/Special:FilePath/Tkdkidstretching.jpg',
+      alt_text: 'Поперечный (боковой) шпагат — растяжка перед тренировкой тхэквондо'
     },
     { id: 'split_b_8', type: 'heading', level: 2, content: 'Разминка перед растяжкой' },
     {
@@ -577,10 +592,22 @@ export const mockGuitarArticle: ArticleDTO = {
       content: 'C (до мажор):  x-3-2-0-1-0\nПальцы: 3-й — A-струна/3-й лад, 2-й — D-струна/2-й лад, 1-й — B-струна/1-й лад'
     },
     {
+      id: 'gtr_img_c',
+      type: 'image',
+      content: 'https://commons.wikimedia.org/wiki/Special:FilePath/C_major_chord_for_guitar_(open).svg',
+      alt_text: 'Аккордовая схема C (до мажор)'
+    },
+    {
       id: 'gtr_b_15',
       type: 'code',
       language: 'text',
       content: 'G (соль мажор):  3-2-0-0-0-3\nПальцы: 2-й — A-струна/2-й лад, 3-й — E-струна(6-я)/3-й лад, 4-й — e-струна/3-й лад'
+    },
+    {
+      id: 'gtr_img_g',
+      type: 'image',
+      content: 'https://commons.wikimedia.org/wiki/Special:FilePath/G_major_chord_for_guitar_(open).svg',
+      alt_text: 'Аккордовая схема G (соль мажор)'
     },
     {
       id: 'gtr_b_16',
@@ -589,16 +616,34 @@ export const mockGuitarArticle: ArticleDTO = {
       content: 'D (ре мажор):  x-0-0-2-3-2\nПальцы: 1-й — G-струна/2-й лад, 3-й — B-струна/3-й лад, 2-й — e-струна/2-й лад'
     },
     {
+      id: 'gtr_img_d',
+      type: 'image',
+      content: 'https://commons.wikimedia.org/wiki/Special:FilePath/D_major_chord_for_guitar_(open).svg',
+      alt_text: 'Аккордовая схема D (ре мажор)'
+    },
+    {
       id: 'gtr_b_17',
       type: 'code',
       language: 'text',
       content: 'A (ля мажор):  x-0-2-2-2-0\nПальцы 1, 2, 3 рядом на 2-м ладу D, G и B струн'
     },
     {
+      id: 'gtr_img_a',
+      type: 'image',
+      content: 'https://commons.wikimedia.org/wiki/Special:FilePath/A_major_chord_for_guitar_(open).svg',
+      alt_text: 'Аккордовая схема A (ля мажор)'
+    },
+    {
       id: 'gtr_b_18',
       type: 'code',
       language: 'text',
       content: 'E (ми мажор):  0-2-2-1-0-0\nПальцы: 2-й — A-струна/2-й лад, 3-й — D-струна/2-й лад, 1-й — G-струна/1-й лад'
+    },
+    {
+      id: 'gtr_img_e',
+      type: 'image',
+      content: 'https://commons.wikimedia.org/wiki/Special:FilePath/E_major_chord_for_guitar_(open).svg',
+      alt_text: 'Аккордовая схема E (ми мажор)'
     },
     { id: 'gtr_b_19', type: 'heading', level: 2, content: 'Открытые минорные аккорды' },
     {
@@ -608,16 +653,34 @@ export const mockGuitarArticle: ArticleDTO = {
       content: 'Am (ля минор):  x-0-2-2-1-0\nПальцы: 2-й — D-струна/2-й лад, 3-й — G-струна/2-й лад, 1-й — B-струна/1-й лад'
     },
     {
+      id: 'gtr_img_am',
+      type: 'image',
+      content: 'https://commons.wikimedia.org/wiki/Special:FilePath/A_minor_chord_for_guitar_(open).svg',
+      alt_text: 'Аккордовая схема Am (ля минор)'
+    },
+    {
       id: 'gtr_b_21',
       type: 'code',
       language: 'text',
       content: 'Em (ми минор):  0-2-2-0-0-0\nПальцы: 2-й — A-струна/2-й лад, 3-й — D-струна/2-й лад'
     },
     {
+      id: 'gtr_img_em',
+      type: 'image',
+      content: 'https://commons.wikimedia.org/wiki/Special:FilePath/E_minor_chord_for_guitar_(open).svg',
+      alt_text: 'Аккордовая схема Em (ми минор)'
+    },
+    {
       id: 'gtr_b_22',
       type: 'code',
       language: 'text',
       content: 'Dm (ре минор):  x-0-0-2-3-1\nПальцы: 2-й — G-струна/2-й лад, 3-й — B-струна/3-й лад, 1-й — e-струна/1-й лад'
+    },
+    {
+      id: 'gtr_img_dm',
+      type: 'image',
+      content: 'https://commons.wikimedia.org/wiki/Special:FilePath/D_minor_chord_for_guitar_(open).svg',
+      alt_text: 'Аккордовая схема Dm (ре минор)'
     },
     { id: 'gtr_b_23', type: 'heading', level: 2, content: 'Баррэ-аккорды' },
     {
@@ -632,6 +695,12 @@ export const mockGuitarArticle: ArticleDTO = {
       language: 'text',
       content:
         'F (фа мажор, баррэ от E-формы, 1-й лад):  1-3-3-2-1-1\nУказательный — баррэ на 1-м ладу всех струн, безымянный — A-струна/3-й лад,\nмизинец — D-струна/3-й лад, средний — G-струна/2-й лад'
+    },
+    {
+      id: 'gtr_img_f',
+      type: 'image',
+      content: 'https://commons.wikimedia.org/wiki/Special:FilePath/F_major_chord_for_guitar_(open).svg',
+      alt_text: 'Аккордовая схема F (фа мажор), открытая аппликатура'
     },
     {
       id: 'gtr_b_26',

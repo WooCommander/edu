@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { appState } from '@/app/state/app-state'
 import { BaseButton, BaseCard, BaseTabs } from '@/shared/ui'
 import type { TabItem } from '@/shared/ui'
 import { notesService } from '../services/notes.service'
@@ -27,7 +28,7 @@ onMounted(async () => {
 const filteredNotes = computed(() => {
   if (notesState.activeTab === 'all') return notesState.notes
   if (notesState.activeTab === 'related') return notesState.notes.filter(n => n.isRelated)
-  return notesState.notes.filter(n => !n.isRelated)
+  return notesState.notes.filter(n => n.articleId === appState.selectedArticleId)
 })
 
 function getColorClass(color: HighlightColor): string {

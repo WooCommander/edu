@@ -153,7 +153,8 @@ async function seedContent(): Promise<void> {
       content: block.content,
       language: block.language ?? null,
       level: block.level ?? null,
-      callout_type: block.callout_type ?? null
+      callout_type: block.callout_type ?? null,
+      alt_text: block.alt_text ?? null
     }))
   )
   const { error: blocksError } = await supabase.from('article_blocks').upsert(blockRows)
@@ -268,7 +269,8 @@ async function seedUserData(userId: string): Promise<void> {
       user_id: userId,
       title: recent.title,
       studied_at: new Date(now - index * 86_400_000).toISOString(),
-      duration_minutes: recent.duration_minutes
+      duration_minutes: recent.duration_minutes,
+      article_id: recent.article_id
     }))
   )
   if (recentStudiesError) throw recentStudiesError

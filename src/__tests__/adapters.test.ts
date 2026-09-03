@@ -41,7 +41,7 @@ describe('Domain Adapters Tests', () => {
 
   it('adaptRecentStudy formats duration correctly', () => {
     const recent = adaptRecentStudy(mockRecentStudies[0])
-    expect(recent.title).toBe('ref и reactive')
+    expect(recent.title).toBe('watch и watchEffect')
     expect(recent.durationText).toBe('8 мин')
     expect(recent.timeAgo).toBe('Сегодня')
   })

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BaseButton, BaseCard, BaseInput, BaseTabs } from '@/shared/ui'
+import { BaseCard, BaseInput, BaseTabs } from '@/shared/ui'
 import type { TabItem } from '@/shared/ui'
 import { searchService } from '../services/search.service'
 import { searchState } from '../state/search.state'
@@ -47,59 +47,65 @@ function handleTabChange(key: string): void {
 
     <!-- Results list -->
     <div class="search-view__body">
-      <!-- Best Matches Section -->
-      <section class="results-section">
-        <h3 class="results-section__title">Лучшие совпадения</h3>
+      <p v-if="!searchState.query" class="search-hint">Начните вводить запрос, чтобы найти статьи, разделы и заметки.</p>
 
-        <div class="results-list">
-          <BaseCard
-            v-for="item in searchState.bestMatches"
-            :key="item.id"
-            padding="sm"
-            clickable
-            class="result-card"
-            @click="emit('selectResult', item)"
-          >
-            <div class="result-card__body">
-              <h4 class="result-card__title">{{ item.title }}</h4>
-              <p class="result-card__path">{{ item.categoryPath }}</p>
-              <p v-if="item.snippetText" class="result-card__snippet">
-                {{ item.snippetText }}
-              </p>
-            </div>
-            <span class="result-card__arrow">›</span>
-          </BaseCard>
-        </div>
-      </section>
+      <p v-else-if="searchState.isLoading" class="search-hint">Ищем…</p>
 
-      <!-- Other Results Section -->
-      <section class="results-section">
-        <h3 class="results-section__title">Другие результаты</h3>
+      <p v-else-if="searchState.totalResultsCount === 0" class="search-hint">
+        Ничего не найдено по запросу «{{ searchState.query }}».
+      </p>
 
-        <div class="results-list">
-          <BaseCard
-            v-for="item in searchState.otherResults"
-            :key="item.id"
-            padding="sm"
-            clickable
-            class="result-card result-card--other"
-            @click="emit('selectResult', item)"
-          >
-            <div class="result-card__icon">
-              <span>{{ item.entityType === 'article' ? '📄' : '📁' }}</span>
-            </div>
-            <div class="result-card__body">
-              <h4 class="result-card__title">{{ item.title }}</h4>
-              <p v-if="item.categoryPath" class="result-card__path">{{ item.categoryPath }}</p>
-            </div>
-          </BaseCard>
-        </div>
-      </section>
+      <template v-else>
+        <!-- Best Matches Section -->
+        <section v-if="searchState.bestMatches.length > 0" class="results-section">
+          <h3 class="results-section__title">Лучшие совпадения</h3>
 
-      <!-- Total results button -->
-      <BaseButton variant="secondary" full-width>
-        Показать все результаты ({{ searchState.totalResultsCount }})
-      </BaseButton>
+          <div class="results-list">
+            <BaseCard
+              v-for="item in searchState.bestMatches"
+              :key="item.id"
+              padding="sm"
+              clickable
+              class="result-card"
+              @click="emit('selectResult', item)"
+            >
+              <div class="result-card__body">
+                <h4 class="result-card__title">{{ item.title }}</h4>
+                <p class="result-card__path">{{ item.categoryPath }}</p>
+                <p v-if="item.snippetText" class="result-card__snippet">
+                  {{ item.snippetText }}
+                </p>
+              </div>
+              <span class="result-card__arrow">›</span>
+            </BaseCard>
+          </div>
+        </section>
+
+        <!-- Other Results Section -->
+        <section v-if="searchState.otherResults.length > 0" class="results-section">
+          <h3 class="results-section__title">Другие результаты</h3>
+
+          <div class="results-list">
+            <BaseCard
+              v-for="item in searchState.otherResults"
+              :key="item.id"
+              padding="sm"
+              clickable
+              class="result-card result-card--other"
+              @click="emit('selectResult', item)"
+            >
+              <div class="result-card__icon">
+                <span>{{ item.entityType === 'article' ? '📄' : item.entityType === 'note' ? '📝' : '📁' }}</span>
+              </div>
+              <div class="result-card__body">
+                <h4 class="result-card__title">{{ item.title }}</h4>
+                <p v-if="item.categoryPath" class="result-card__path">{{ item.categoryPath }}</p>
+                <p v-if="item.snippetText" class="result-card__snippet">{{ item.snippetText }}</p>
+              </div>
+            </BaseCard>
+          </div>
+        </section>
+      </template>
     </div>
   </div>
 </template>
@@ -137,6 +143,13 @@ function handleTabChange(key: string): void {
     font-size: 1rem;
     margin-right: 0.25rem;
   }
+}
+
+.search-hint {
+  margin: 1.5rem 0 0;
+  text-align: center;
+  font-size: 0.875rem;
+  color: #94a3b8;
 }
 
 .results-section {

@@ -14,7 +14,7 @@ Without any Supabase configuration the app runs fully offline against `src/api/m
 ## Connecting Supabase (optional)
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In the SQL editor, run [supabase/migrations/0001_init.sql](./supabase/migrations/0001_init.sql). It creates all tables, RLS policies, and a trigger that auto-creates a `profiles` row on sign-up.
+2. In the SQL editor, run every file in [supabase/migrations/](./supabase/migrations/) in order. They create all tables, RLS policies, and a trigger that auto-creates a `profiles` row on sign-up.
 3. Copy `.env.example` to `.env` and fill in `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (Settings → API).
 4. `npm run dev`, sign up once from the app's login screen (this is your personal account).
 5. Seed shared content (knowledge tree, article, quiz, practice task, graph) plus your personal demo data (notes, daily tasks, stats, progress) — matching what the offline mock shows:
@@ -25,6 +25,10 @@ Without any Supabase configuration the app runs fully offline against `src/api/m
    ```
 
 `src/api/client.ts` automatically switches between mock data and real Supabase queries based on whether `VITE_SUPABASE_*` is set — no code changes needed either way. Table shapes are typed in `src/api/database.types.ts`; regenerate it with `supabase gen types typescript` once you have a live project.
+
+## Adding content (articles, images) without code changes
+
+Once Supabase is connected, new articles/sections/images are just rows in tables — no code, no redeploy. See [CONTENT_GUIDE.md](./CONTENT_GUIDE.md).
 
 ## Scripts
 

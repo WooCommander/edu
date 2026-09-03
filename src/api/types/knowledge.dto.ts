@@ -12,11 +12,12 @@ export interface TreeNodeDTO {
 
 export interface ArticleContentBlockDTO {
   id: string
-  type: 'paragraph' | 'heading' | 'code' | 'callout' | 'list'
-  content: string
+  type: 'paragraph' | 'heading' | 'code' | 'callout' | 'list' | 'image'
+  content: string // for 'list': newline-separated items; for 'image': the image URL
   language?: string
   level?: number // для heading (h2, h3)
   callout_type?: 'info' | 'warning' | 'success'
+  alt_text?: string // для 'image': альтернативный текст / подпись
 }
 
 export interface ArticleSectionDTO {

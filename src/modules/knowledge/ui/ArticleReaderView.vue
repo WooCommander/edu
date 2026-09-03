@@ -164,6 +164,19 @@ onMounted(async () => {
             <span class="callout-icon">💡</span>
             <div class="callout-text">{{ block.content }}</div>
           </div>
+
+          <!-- Bullet list (newline-separated items) -->
+          <ul v-else-if="block.type === 'list'" class="article-list">
+            <li v-for="(item, itemIndex) in block.content.split('\n').filter(Boolean)" :key="itemIndex">
+              {{ item }}
+            </li>
+          </ul>
+
+          <!-- Image -->
+          <figure v-else-if="block.type === 'image'" class="article-figure">
+            <img :src="block.content" :alt="block.altText || ''" class="article-image" />
+            <figcaption v-if="block.altText" class="article-image-caption">{{ block.altText }}</figcaption>
+          </figure>
         </template>
       </div>
     </article>
@@ -402,6 +415,42 @@ onMounted(async () => {
     font-size: 0.925rem;
     line-height: 1.5;
   }
+}
+
+.article-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #334155;
+}
+
+.article-figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.article-image {
+  display: block;
+  width: min(340px, 100%);
+  height: auto;
+  max-height: 420px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.article-image-caption {
+  font-size: 0.8125rem;
+  color: #64748b;
+  text-align: center;
 }
 
 .reactions-box {

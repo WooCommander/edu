@@ -4,6 +4,7 @@ import { BaseButton } from '@/shared/ui'
 import { knowledgeService } from '../services/knowledge.service'
 import { knowledgeState } from '../state/knowledge.state'
 import KnowledgeTreeNode from './KnowledgeTreeNode.vue'
+import { findBreadcrumbPath } from '../adapters/knowledge.adapter'
 import type { TreeNodeUIModel } from '../adapters/knowledge.adapter'
 
 const emit = defineEmits<{
@@ -18,22 +19,9 @@ onMounted(async () => {
   }
 })
 
-function findPathTo(node: TreeNodeUIModel, targetId: string, path: string[]): boolean {
-  const isRealNode = node.level > 0
-  if (isRealNode) path.push(node.title)
-  if (node.id === targetId) return true
-  for (const child of node.children) {
-    if (findPathTo(child, targetId, path)) return true
-  }
-  if (isRealNode) path.pop()
-  return false
-}
-
 const breadcrumbPath = computed<string[]>(() => {
   if (!knowledgeState.tree || !knowledgeState.selectedNodeId) return []
-  const path: string[] = []
-  findPathTo(knowledgeState.tree, knowledgeState.selectedNodeId, path)
-  return path
+  return findBreadcrumbPath(knowledgeState.tree, knowledgeState.selectedNodeId).map(node => node.title)
 })
 
 function handleSelectNode(node: TreeNodeUIModel): void {

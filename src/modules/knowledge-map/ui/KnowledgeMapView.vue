@@ -71,7 +71,18 @@ const graphEdges = computed(() => {
 
 function handleNodeClick(node: GraphNodeUIModel): void {
   knowledgeMapService.selectNode(node.id)
-  emit('openArticle', 'article_watch')
+  if (node.articleId) {
+    emit('openArticle', node.articleId)
+  }
+}
+
+// Splits a (possibly multi-word) center label into up to 2 lines so it fits
+// inside the fixed-radius circle regardless of the graph's actual title.
+function centerLabelLines(label: string): string[] {
+  const words = label.split(' ')
+  if (words.length <= 1) return [label]
+  const mid = Math.ceil(words.length / 2)
+  return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')]
 }
 </script>
 
@@ -123,22 +134,15 @@ function handleNodeClick(node: GraphNodeUIModel): void {
             <template v-if="node.isCenter">
               <circle r="44" fill="#6366f1" filter="drop-shadow(0 4px 8px rgba(99, 102, 241, 0.4))" />
               <text
+                v-for="(line, lineIndex) in centerLabelLines(node.label)"
+                :key="lineIndex"
                 text-anchor="middle"
-                dy="-4"
+                :dy="centerLabelLines(node.label).length > 1 ? (lineIndex === 0 ? -4 : 12) : 4"
                 fill="#ffffff"
                 font-size="11"
                 font-weight="700"
               >
-                Реактивность
-              </text>
-              <text
-                text-anchor="middle"
-                dy="12"
-                fill="#ffffff"
-                font-size="11"
-                font-weight="700"
-              >
-                Vue 3
+                {{ line }}
               </text>
             </template>
 

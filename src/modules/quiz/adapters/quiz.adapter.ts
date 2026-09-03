@@ -4,6 +4,7 @@ export interface QuizQuestionUIModel {
   id: string
   articleId: string
   progressLabel: string
+  progressPercent: number
   questionText: string
   options: {
     key: string
@@ -29,6 +30,7 @@ export function adaptQuizQuestion(dto: QuizQuestionDTO): QuizQuestionUIModel {
     id: dto.id,
     articleId: dto.article_id,
     progressLabel: `Вопрос ${dto.question_number} из ${dto.total_questions}`,
+    progressPercent: dto.total_questions > 0 ? Math.round((dto.question_number / dto.total_questions) * 100) : 0,
     questionText: dto.question_text,
     options: dto.options,
     correctKey: dto.correct_option_key,

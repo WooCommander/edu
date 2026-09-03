@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { BaseButton, BaseModal } from '@/shared/ui'
+import { knowledgeState } from '../state/knowledge.state'
+import { findBreadcrumbPath } from '../adapters/knowledge.adapter'
 
 interface Props {
   isOpen: boolean
@@ -9,44 +12,48 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'goToArticle'): void
+  (e: 'goToArticle', articleId: string): void
 }>()
 
-interface PathStep {
-  level: number
-  code: string
-  title: string
-  isActive?: boolean
-}
+const pathChain = computed(() => {
+  if (!knowledgeState.tree || !knowledgeState.selectedNodeId) return []
+  return findBreadcrumbPath(knowledgeState.tree, knowledgeState.selectedNodeId)
+})
 
-const pathChain: PathStep[] = [
-  { level: 1, code: '3', title: 'Vue 3' },
-  { level: 2, code: '1', title: '1. Основы' },
-  { level: 3, code: '1', title: '1.1. Реактивность' },
-  { level: 4, code: '1', title: '1.1.1. watch и watchEffect' },
-  { level: 5, code: '1', title: '1.1.1.1. watch', isActive: true },
-  { level: 6, code: '', title: '1.1.1.1.2. Параметры' }
-]
+// The article to open on "Перейти к статье": the selected node's own article,
+// or the closest ancestor's if the selected node itself has none.
+const targetArticleId = computed<string | undefined>(() => {
+  const chain = pathChain.value
+  for (let i = chain.length - 1; i >= 0; i--) {
+    if (chain[i].hasArticle && chain[i].articleId) return chain[i].articleId
+  }
+  return knowledgeState.currentArticle?.id
+})
+
+function handleGoToArticle(): void {
+  if (targetArticleId.value) emit('goToArticle', targetArticleId.value)
+}
 </script>
 
 <template>
   <BaseModal :is-open="props.isOpen" title="Полный путь" @close="emit('close')">
-    <div class="path-chain">
+    <div v-if="pathChain.length > 0" class="path-chain">
       <div
         v-for="(step, index) in pathChain"
-        :key="index"
+        :key="step.id"
         class="path-step"
         :style="{ paddingLeft: `${index * 12}px` }"
       >
-        <div class="path-step__pill" :class="{ 'path-step__pill--active': step.isActive }">
+        <div class="path-step__pill" :class="{ 'path-step__pill--active': index === pathChain.length - 1 }">
           <span v-if="step.code" class="path-step__code-circle">{{ step.code }}</span>
           <span class="path-step__title">{{ step.title }}</span>
         </div>
       </div>
     </div>
+    <p v-else class="path-empty">Выберите раздел в дереве тем, чтобы увидеть полный путь.</p>
 
     <template #footer>
-      <BaseButton variant="primary" full-width @click="emit('goToArticle')">
+      <BaseButton variant="primary" full-width :disabled="!targetArticleId" @click="handleGoToArticle">
         Перейти к статье
       </BaseButton>
     </template>
@@ -59,6 +66,13 @@ const pathChain: PathStep[] = [
   flex-direction: column;
   gap: 0.75rem;
   padding: 0.5rem 0;
+}
+
+.path-empty {
+  margin: 0;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+  color: #64748b;
 }
 
 .path-step {
