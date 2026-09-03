@@ -1,6 +1,6 @@
 import { apiClient } from '@/api'
 import type { HighlightColor } from '@/api'
-import { appState } from '@/app/state/app-state'
+import { router } from '@/router'
 import { adaptNote } from '../adapters/notes.adapter'
 import { notesState } from '../state/notes.state'
 
@@ -27,7 +27,7 @@ class NotesService {
     quoteText: string,
     userComment: string,
     color: HighlightColor,
-    articleId: string = appState.selectedArticleId
+    articleId: string = (router.currentRoute.value.params.id as string || 'article_watch')
   ): Promise<void> {
     const newNoteDto = await apiClient.addNote({
       article_id: articleId,

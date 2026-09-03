@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { router } from '../router'
 import { appService } from '@/app/services/app-service'
 import { appState } from '@/app/state/app-state'
 import { dashboardService } from '@/modules/dashboard/services/dashboard.service'
@@ -10,18 +11,18 @@ describe('Domain Services & AppService Tests', () => {
   it('AppService updates activeTab and activeScreen strictly', () => {
     appService.navigateToTab('search')
     expect(appState.activeTab).toBe('search')
-    expect(appState.activeScreen).toBe('search')
+    expect(router.currentRoute.value.name).toBe('search')
 
     appService.navigateToTab('map')
     expect(appState.activeTab).toBe('map')
-    expect(appState.activeScreen).toBe('map')
+    expect(router.currentRoute.value.name).toBe('map')
 
     appService.openZenMode()
-    expect(appState.activeScreen).toBe('zen')
+    expect(router.currentRoute.value.name).toBe('zen')
 
     appService.openArticle('article_ref_reactive')
-    expect(appState.activeScreen).toBe('article')
-    expect(appState.selectedArticleId).toBe('article_ref_reactive')
+    expect(router.currentRoute.value.name).toBe('article')
+    expect(router.currentRoute.value.params.id).toBe('article_ref_reactive')
   })
 
   it('DashboardService loads data and updates state', async () => {

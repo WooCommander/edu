@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { appState } from '@/app/state/app-state'
+import { useRoute } from 'vue-router'
 import { BaseButton, BaseProgressBar } from '@/shared/ui'
 import { quizService } from '../services/quiz.service'
 import { quizState } from '../state/quiz.state'
+
+const route = useRoute()
 
 const emit = defineEmits<{
   (e: 'back'): void
@@ -11,8 +13,8 @@ const emit = defineEmits<{
 }>()
 
 onMounted(async () => {
-  if (quizState.currentQuestion?.articleId !== appState.selectedArticleId) {
-    await quizService.loadQuizQuestion(appState.selectedArticleId)
+  if (quizState.currentQuestion?.articleId !== (route.params.id as string || 'article_watch')) {
+    await quizService.loadQuizQuestion((route.params.id as string || 'article_watch'))
   }
 })
 

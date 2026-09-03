@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { appState } from '@/app/state/app-state'
+import { useRoute } from 'vue-router'
 import { BaseBadge, CodeBlock } from '@/shared/ui'
 import { knowledgeService } from '../services/knowledge.service'
 import { knowledgeState } from '../state/knowledge.state'
+
+const route = useRoute()
 
 const emit = defineEmits<{
   (e: 'back'): void
@@ -16,8 +18,8 @@ const emit = defineEmits<{
 }>()
 
 onMounted(async () => {
-  if (knowledgeState.currentArticle?.id !== appState.selectedArticleId) {
-    await knowledgeService.loadArticle(appState.selectedArticleId)
+  if (knowledgeState.currentArticle?.id !== (route.params.id as string || 'article_watch')) {
+    await knowledgeService.loadArticle((route.params.id as string || 'article_watch'))
   }
 })
 </script>

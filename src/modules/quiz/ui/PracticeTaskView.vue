@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { appState } from '@/app/state/app-state'
+import { useRoute } from 'vue-router'
 import { BaseButton, BaseTabs } from '@/shared/ui'
 import type { TabItem } from '@/shared/ui'
 import { quizService } from '../services/quiz.service'
 import { quizState } from '../state/quiz.state'
+
+const route = useRoute()
 
 const emit = defineEmits<{
   (e: 'back'): void
@@ -17,8 +19,8 @@ const practiceTabs: TabItem[] = [
 ]
 
 onMounted(async () => {
-  if (quizState.currentPracticeTask?.articleId !== appState.selectedArticleId) {
-    await quizService.loadPracticeTask(appState.selectedArticleId)
+  if (quizState.currentPracticeTask?.articleId !== (route.params.id as string || 'article_watch')) {
+    await quizService.loadPracticeTask((route.params.id as string || 'article_watch'))
   }
 })
 

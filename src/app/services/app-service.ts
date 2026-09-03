@@ -1,5 +1,6 @@
 import { appState } from '../state/app-state'
 import type { ActiveScreen, NavTab, UserProfile } from '@/shared/types'
+import { router } from '@/router'
 
 class AppService {
   public setUser(user: UserProfile | null): void {
@@ -8,41 +9,38 @@ class AppService {
 
   public navigateToTab(tab: NavTab): void {
     appState.activeTab = tab
-    if (tab === 'dashboard') appState.activeScreen = 'dashboard'
-    else if (tab === 'search') appState.activeScreen = 'search'
-    else if (tab === 'map') appState.activeScreen = 'map'
-    else if (tab === 'notes') appState.activeScreen = 'notes'
-    else if (tab === 'profile') appState.activeScreen = 'profile'
+    if (tab === 'dashboard') router.push({ name: 'dashboard' })
+    else if (tab === 'search') router.push({ name: 'search' })
+    else if (tab === 'map') router.push({ name: 'map' })
+    else if (tab === 'notes') router.push({ name: 'notes' })
+    else if (tab === 'profile') router.push({ name: 'profile' })
   }
 
   public navigateToScreen(screen: ActiveScreen, articleId?: string): void {
-    if (articleId) {
-      appState.selectedArticleId = articleId
-    }
-    appState.activeScreen = screen
+    router.push({ name: screen, params: articleId ? { id: articleId } : undefined })
   }
 
   public openArticle(articleId: string = 'article_watch'): void {
-    appState.selectedArticleId = articleId
-    appState.activeScreen = 'article'
+    router.push({ name: 'article', params: { id: articleId } })
   }
 
   public openTree(): void {
-    appState.activeScreen = 'tree'
+    router.push({ name: 'tree' })
   }
 
   public openZenMode(): void {
-    appState.activeScreen = 'zen'
+    const id = router.currentRoute.value.params.id
+    router.push({ name: 'zen', params: id ? { id } : undefined })
   }
 
-  public openQuiz(articleId: string = 'article_watch'): void {
-    appState.selectedArticleId = articleId
-    appState.activeScreen = 'quiz'
+  public openQuiz(articleId?: string): void {
+    const id = articleId || router.currentRoute.value.params.id
+    router.push({ name: 'quiz', params: id ? { id } : undefined })
   }
 
-  public openPractice(articleId: string = 'article_watch'): void {
-    appState.selectedArticleId = articleId
-    appState.activeScreen = 'practice'
+  public openPractice(articleId?: string): void {
+    const id = articleId || router.currentRoute.value.params.id
+    router.push({ name: 'practice', params: id ? { id } : undefined })
   }
 
   public toggleToc(forceState?: boolean): void {
