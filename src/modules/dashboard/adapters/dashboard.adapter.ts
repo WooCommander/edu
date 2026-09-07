@@ -1,4 +1,4 @@
-import type { ContinueStudyItemDTO, DailyTaskDTO, RecentStudyDTO } from '@/api'
+import type { ContinueStudyItemDTO, RecentStudyDTO } from '@/api'
 
 export interface ContinueStudyUIModel {
   articleId: string
@@ -6,16 +6,6 @@ export interface ContinueStudyUIModel {
   categoryPath: string
   remainingTimeText: string
   progress: number
-}
-
-export interface DailyTaskUIModel {
-  id: string
-  type: 'cards' | 'test' | 'practice'
-  title: string
-  subtitle: string
-  badgeCount: number
-  isCompleted: boolean
-  articleId?: string
 }
 
 export interface RecentStudyUIModel {
@@ -33,18 +23,6 @@ export function adaptContinueStudy(dto: ContinueStudyItemDTO): ContinueStudyUIMo
     categoryPath: `${dto.parent_category} › ${dto.sub_category}`,
     remainingTimeText: `Осталось: ${dto.remaining_minutes} мин`,
     progress: dto.progress_percent
-  }
-}
-
-export function adaptDailyTask(dto: DailyTaskDTO): DailyTaskUIModel {
-  return {
-    id: dto.id,
-    type: dto.type,
-    title: dto.title,
-    subtitle: dto.subtitle,
-    badgeCount: dto.count_badge,
-    isCompleted: dto.is_completed,
-    articleId: dto.article_id
   }
 }
 

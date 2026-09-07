@@ -23,7 +23,7 @@ async function handleSubmit(): Promise<void> {
       <div class="auth-brand">
         <span class="brand-logo">🧠</span>
         <h1 class="brand-title">Система Знаний</h1>
-        <p class="brand-sub">Личная база знаний &amp; LMS</p>
+        <p class="brand-sub">Личная база знаний</p>
       </div>
 
       <div class="auth-tabs">

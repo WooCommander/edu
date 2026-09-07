@@ -11,11 +11,15 @@ export default defineConfig({
     }
   },
   test: {
-    // Force offline/mock-data mode in tests regardless of a local .env,
-    // so the suite never depends on (or writes to) a real Supabase project.
+    // vue-router needs a DOM (createWebHistory reads `window`).
+    environment: 'happy-dom',
+    // The client always requires Supabase now (no offline fallback), so
+    // supabase.ts throws at import time without *some* URL/key — these
+    // placeholders just satisfy that; tests must not depend on real network
+    // calls succeeding (test only pure logic: adapters, routing, local state).
     env: {
-      VITE_SUPABASE_URL: '',
-      VITE_SUPABASE_ANON_KEY: ''
+      VITE_SUPABASE_URL: 'https://placeholder.supabase.co',
+      VITE_SUPABASE_ANON_KEY: 'placeholder-anon-key'
     }
   }
 })

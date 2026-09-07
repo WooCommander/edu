@@ -152,3 +152,37 @@ export function findBreadcrumbPath(root: TreeNodeUIModel, targetId: string): Tre
   walk(root)
   return path
 }
+
+/**
+ * Finds the tree node whose `articleId` matches, walking depth-first.
+ * Used to keep the sidebar tree's highlighted node in sync with whichever
+ * article is actually open, regardless of how the user navigated there.
+ */
+export function findNodeByArticleId(root: TreeNodeUIModel, articleId: string): TreeNodeUIModel | undefined {
+  if (root.articleId === articleId) return root
+  for (const child of root.children) {
+    const found = findNodeByArticleId(child, articleId)
+    if (found) return found
+  }
+  return undefined
+}
+
+/**
+ * Force-expands every ancestor of `targetId` (mutating `node.isExpanded`,
+ * the same "external override" flag `filterTreeByQuery` uses) so a node
+ * deep in the tree becomes visible without the user manually clicking
+ * through each level — e.g. after clicking a breadcrumb crumb.
+ */
+export function expandPathTo(root: TreeNodeUIModel, targetId: string): void {
+  function walk(node: TreeNodeUIModel): boolean {
+    if (node.id === targetId) return true
+    for (const child of node.children) {
+      if (walk(child)) {
+        node.isExpanded = true
+        return true
+      }
+    }
+    return false
+  }
+  walk(root)
+}

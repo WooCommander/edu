@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { appService } from '@/app/services/app-service'
-import { searchState } from '@/modules/search'
+import { searchState } from '@/modules/search/state/search.state'
 import { knowledgeService } from '../services/knowledge.service'
 import { knowledgeState } from '../state/knowledge.state'
 import KnowledgeTreeNode from './KnowledgeTreeNode.vue'

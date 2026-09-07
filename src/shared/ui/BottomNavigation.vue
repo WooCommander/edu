@@ -20,9 +20,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { key: 'dashboard', label: 'Главная', icon: '🏠' },
   { key: 'search', label: 'Поиск', icon: '🔍' },
-  { key: 'map', label: 'Карта', icon: '🌐' },
-  { key: 'notes', label: 'Заметки', icon: '📓' },
-  { key: 'profile', label: 'Профиль', icon: '👤' }
+  { key: 'notes', label: 'Заметки', icon: '📓' }
 ]
 </script>
 

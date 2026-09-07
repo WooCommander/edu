@@ -4,33 +4,14 @@ import { onMounted } from 'vue'
 import { dashboardState } from '../state/dashboard.state'
 import { dashboardService } from '../services/dashboard.service'
 import ContinueStudyCard from './ContinueStudyCard.vue'
-import DailyTaskList from './DailyTaskList.vue'
 import RecentStudiesList from './RecentStudiesList.vue'
-import type { DailyTaskUIModel, RecentStudyUIModel } from '../adapters/dashboard.adapter'
-
-const emit = defineEmits<{
-  (e: 'openArticle', articleId: string): void
-  (e: 'openQuiz', articleId?: string): void
-  (e: 'openPractice', articleId?: string): void
-  (e: 'openTree'): void
-}>()
+import type { RecentStudyUIModel } from '../adapters/dashboard.adapter'
 
 onMounted(async () => {
   if (!dashboardState.user) {
     await dashboardService.loadDashboardData()
   }
 })
-
-function handleTaskClick(task: DailyTaskUIModel): void {
-  if (!task.articleId) return
-  if (task.type === 'test') {
-    appService.openQuiz(task.articleId)
-  } else if (task.type === 'practice') {
-    appService.openPractice(task.articleId)
-  } else {
-    appService.openArticle(task.articleId)
-  }
-}
 
 function handleRecentClick(item: RecentStudyUIModel): void {
   appService.openArticle(item.articleId)
@@ -66,18 +47,12 @@ function handleRecentClick(item: RecentStudyUIModel): void {
           :item="dashboardState.continueStudy"
           @continue="(id) => appService.openArticle(id)"
         />
-
-        <DailyTaskList
-          :tasks="dashboardState.dailyTasks"
-          @select-task="handleTaskClick"
-        />
       </div>
 
       <div class="dashboard-view__col">
         <RecentStudiesList
           :items="dashboardState.recentStudies"
           @select-item="handleRecentClick"
-          @view-all="appService.openTree()"
         />
       </div>
     </div>

@@ -8,16 +8,6 @@ import { knowledgeState } from '../state/knowledge.state'
 
 const route = useRoute()
 
-const emit = defineEmits<{
-  (e: 'back'): void
-  (e: 'openToc'): void
-  (e: 'openNotes'): void
-  (e: 'openZen'): void
-  (e: 'share'): void
-  (e: 'nextPage'): void
-  (e: 'prevPage'): void
-}>()
-
 async function loadArticleData() {
   const routeId = route.params.id as string || 'article_watch'
   if (knowledgeState.currentArticle?.id !== routeId) {
@@ -139,7 +129,7 @@ watch(() => route.params.id, () => {
           <button
             type="button"
             class="action-pill"
-            @click="emit('share')"
+            @click="appService.showToast('Ссылка скопирована в буфер!')"
           >
             <span>↗️</span>
             <span>Поделиться</span>
@@ -205,9 +195,9 @@ watch(() => route.params.id, () => {
       </div>
 
       <div class="pagination-box">
-        <button type="button" class="page-nav-btn" @click="emit('prevPage')">‹</button>
+        <button type="button" class="page-nav-btn" @click="appService.showToast('Предыдущий раздел')">‹</button>
         <span class="page-text">{{ knowledgeState.currentArticle.progressText }}</span>
-        <button type="button" class="page-nav-btn" @click="emit('nextPage')">›</button>
+        <button type="button" class="page-nav-btn" @click="appService.showToast('Следующий раздел')">›</button>
       </div>
     </footer>
   </div>

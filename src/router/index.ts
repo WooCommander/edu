@@ -9,11 +9,8 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/search',
-    redirect: '/'
-  },
-  {
-    path: '/tree',
-    redirect: '/'
+    name: 'search',
+    component: () => import('@/modules/search/ui/GlobalSearchView.vue')
   },
   {
     path: '/article/:id?',
@@ -29,25 +26,6 @@ const routes: RouteRecordRaw[] = [
     path: '/notes',
     name: 'notes',
     component: () => import('@/modules/notes/ui/NotesListView.vue')
-  },
-  {
-    path: '/quiz/:id?',
-    name: 'quiz',
-    component: () => import('@/modules/quiz/ui/QuizView.vue')
-  },
-  {
-    path: '/practice/:id?',
-    name: 'practice',
-    component: () => import('@/modules/quiz/ui/PracticeTaskView.vue')
-  },
-  {
-    path: '/profile',
-    name: 'profile',
-    component: () => import('@/modules/statistics/ui/StatisticsView.vue')
-  },
-  {
-    path: '/map',
-    redirect: '/'
   }
 ]
 

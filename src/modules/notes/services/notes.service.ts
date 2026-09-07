@@ -1,6 +1,6 @@
 import { apiClient } from '@/api'
 import type { HighlightColor } from '@/api'
-import { router } from '@/router'
+import { knowledgeState } from '@/modules/knowledge/state/knowledge.state'
 import { adaptNote } from '../adapters/notes.adapter'
 import { notesState } from '../state/notes.state'
 
@@ -15,11 +15,6 @@ class NotesService {
     }
   }
 
-  
-  public toggleNoteModal(forceState?: boolean): void {
-    notesState.isNoteModalOpen = forceState !== undefined ? forceState : !notesState.isNoteModalOpen
-  }
-
   public setActiveTab(tab: 'all' | 'current' | 'related'): void {
     notesState.activeTab = tab
   }
@@ -32,7 +27,7 @@ class NotesService {
     quoteText: string,
     userComment: string,
     color: HighlightColor,
-    articleId: string = (router.currentRoute.value.params.id as string || 'article_watch')
+    articleId: string = knowledgeState.currentArticle?.id ?? 'article_watch'
   ): Promise<void> {
     const newNoteDto = await apiClient.addNote({
       article_id: articleId,

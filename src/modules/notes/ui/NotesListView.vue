@@ -5,17 +5,9 @@ import { computed, onMounted } from 'vue'
 import { BaseButton, BaseCard, BaseTabs } from '@/shared/ui'
 import type { TabItem } from '@/shared/ui'
 import { notesService } from '../services/notes.service'
-import { useRoute } from 'vue-router'
+import { knowledgeState } from '@/modules/knowledge/state/knowledge.state'
 import { notesState } from '../state/notes.state'
-import NoteCreateModal from './NoteCreateModal.vue'
 import type { HighlightColor } from '@/api'
-
-const route = useRoute()
-
-const emit = defineEmits<{
-  (e: 'back'): void
-  (e: 'selectNote', noteId: string): void
-}>()
 
 const notesTabs: TabItem[] = [
   { key: 'all', label: 'Все' },
@@ -32,7 +24,9 @@ onMounted(async () => {
 const filteredNotes = computed(() => {
   if (notesState.activeTab === 'all') return notesState.notes
   if (notesState.activeTab === 'related') return notesState.notes.filter(n => n.isRelated)
-  return notesState.notes.filter(n => n.articleId === ((route.params.id as string) || 'article_watch'))
+  // "/notes" (в отличие от "/article/:id") не несёт id статьи в урле —
+  // берём последнюю реально открытую статью из состояния.
+  return notesState.notes.filter(n => n.articleId === knowledgeState.currentArticle?.id)
 })
 
 function getColorClass(color: HighlightColor): string {
@@ -50,9 +44,6 @@ function getColorClass(color: HighlightColor): string {
   }
 }
 
-function handleSaveNote(payload: { quoteText: string; comment: string; color: HighlightColor }): void {
-  notesService.createNote(payload.quoteText, payload.comment, payload.color)
-}
 </script>
 
 <template>
@@ -85,7 +76,7 @@ function handleSaveNote(payload: { quoteText: string; comment: string; color: Hi
           clickable
           class="note-card"
           :class="getColorClass(note.color)"
-          @click="emit('selectNote', note.id)"
+          @click="appService.showToast(`Выбрана заметка: «${note.quoteText.slice(0, 40)}…»`)"
         >
           <div class="note-card__inner">
             <div class="note-card__content">
@@ -114,13 +105,6 @@ function handleSaveNote(payload: { quoteText: string; comment: string; color: Hi
         <span>+</span> Новая заметка
       </BaseButton>
     </div>
-
-    <!-- Create Note Modal -->
-    <NoteCreateModal
-      :is-open="notesState.isCreateModalOpen"
-      @close="notesService.toggleCreateModal(false)"
-      @save="handleSaveNote"
-    />
   </div>
 </template>
 

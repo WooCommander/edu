@@ -1,9 +1,7 @@
 import { supabase } from './supabase'
 import type { ArticleDTO, ArticleSectionDTO, TreeNodeDTO } from './types/knowledge.dto'
-import type { ContinueStudyItemDTO, DailyTaskDTO, LearningStatsDTO, RecentStudyDTO } from './types/learning.dto'
+import type { ContinueStudyItemDTO, RecentStudyDTO } from './types/learning.dto'
 import type { NoteDTO } from './types/notes.dto'
-import type { PracticeTaskDTO, QuizQuestionDTO } from './types/quiz.dto'
-import type { KnowledgeGraphDTO } from './types/knowledge-map.dto'
 import type { SearchResultDTO } from './types/search.dto'
 import type { ArticleSectionRow, TreeNodeRow } from './database.types'
 import type { UserProfile } from '@/shared/types'
@@ -84,7 +82,7 @@ function buildArticleSections(rows: ArticleSectionRow[], readMap: Map<string, bo
 
 export const apiClient = {
   async getUserProfile(): Promise<UserProfile> {
-        const userId = await getCurrentUserId()
+    const userId = await getCurrentUserId()
     const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
     if (error || !data) throw error ?? new Error('Профиль пользователя не найден.')
 
@@ -92,7 +90,7 @@ export const apiClient = {
   },
 
   async getContinueStudyItem(): Promise<ContinueStudyItemDTO> {
-        const userId = await getCurrentUserId()
+    const userId = await getCurrentUserId()
     const { data, error } = await supabase.from('continue_study').select('*').eq('user_id', userId).maybeSingle()
     if (error) throw error
     if (!data) throw new Error('Нет записи "продолжить обучение" для пользователя в таблице continue_study.')
@@ -100,21 +98,8 @@ export const apiClient = {
     return data
   },
 
-  async getDailyTasks(): Promise<DailyTaskDTO[]> {
-        const userId = await getCurrentUserId()
-    const today = new Date().toISOString().slice(0, 10)
-    const { data, error } = await supabase
-      .from('daily_tasks')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('task_date', today)
-    if (error) throw error
-
-    return (data ?? []).map(row => ({ ...row, article_id: row.article_id ?? undefined }))
-  },
-
   async getRecentStudies(): Promise<RecentStudyDTO[]> {
-        const userId = await getCurrentUserId()
+    const userId = await getCurrentUserId()
     const { data, error } = await supabase
       .from('recent_studies')
       .select('*')
@@ -133,7 +118,7 @@ export const apiClient = {
   },
 
   async getKnowledgeTree(): Promise<TreeNodeDTO> {
-        const userId = await getCurrentUserId()
+    const userId = await getCurrentUserId()
     const [{ data: rows, error: rowsError }, { data: progressRows, error: progressError }] = await Promise.all([
       supabase.from('tree_nodes').select('*').order('sort_order', { ascending: true }),
       supabase.from('tree_node_progress').select('tree_node_id').eq('user_id', userId)
@@ -200,7 +185,7 @@ export const apiClient = {
   },
 
   async getNotesByArticleId(articleId?: string): Promise<NoteDTO[]> {
-        const userId = await getCurrentUserId()
+    const userId = await getCurrentUserId()
     const query = supabase.from('notes').select('*').eq('user_id', userId).order('created_at', { ascending: false })
     const { data, error } = await (articleId ? query.eq('article_id', articleId) : query)
     if (error) throw error
@@ -242,83 +227,6 @@ export const apiClient = {
       created_at: data.created_at,
       created_at_label: 'Только что',
       is_related: data.is_related
-    }
-  },
-
-  async getQuizQuestionsByArticleId(articleId: string): Promise<QuizQuestionDTO[]> {
-        const { data, error } = await supabase
-      .from('quiz_questions')
-      .select('*')
-      .eq('article_id', articleId)
-      .order('question_number')
-    if (error) throw error
-
-    return data ?? []
-  },
-
-  async getPracticeTaskByArticleId(articleId: string): Promise<PracticeTaskDTO> {
-        const { data, error } = await supabase
-      .from('practice_tasks')
-      .select('*')
-      .eq('article_id', articleId)
-      .order('task_number')
-      .limit(1)
-      .maybeSingle()
-    if (error) throw error
-    if (!data) throw new Error(`Нет практического задания для статьи "${articleId}".`)
-
-    return data
-  },
-
-  async getLearningStats(period: string = 'За неделю'): Promise<LearningStatsDTO> {
-    const userId = await getCurrentUserId()
-    const [{ data: stats, error: statsError }, { data: categories, error: categoriesError }] = await Promise.all([
-      supabase.from('learning_stats').select('*').eq('user_id', userId).eq('period', period).maybeSingle(),
-      supabase.from('category_progress').select('*').eq('user_id', userId).order('sort_order')
-    ])
-    if (statsError) throw statsError
-    if (categoriesError) throw categoriesError
-    if (!stats) throw new Error('Нет статистики обучения для пользователя в таблице learning_stats.')
-
-    return {
-      period: stats.period,
-      articles_studied: stats.articles_studied,
-      articles_growth_percent: stats.articles_growth_percent,
-      study_time_formatted: stats.study_time_formatted,
-      study_time_growth_formatted: stats.study_time_growth_formatted,
-      tests_completed: stats.tests_completed,
-      tests_growth_count: stats.tests_growth_count,
-      category_progress: (categories ?? []).map(row => ({
-        category_id: row.category_id,
-        title: row.title,
-        progress_percent: row.progress_percent
-      }))
-    }
-  },
-
-  async getKnowledgeGraph(): Promise<KnowledgeGraphDTO> {
-        const { data: graph, error: graphError } = await supabase.from('knowledge_graphs').select('*').limit(1).maybeSingle()
-    if (graphError) throw graphError
-    if (!graph) throw new Error('Граф знаний не найден в таблице knowledge_graphs.')
-
-    const [{ data: nodes, error: nodesError }, { data: edges, error: edgesError }] = await Promise.all([
-      supabase.from('knowledge_graph_nodes').select('*').eq('graph_id', graph.id),
-      supabase.from('knowledge_graph_edges').select('*').eq('graph_id', graph.id)
-    ])
-    if (nodesError) throw nodesError
-    if (edgesError) throw edgesError
-
-    return {
-      id: graph.id,
-      title: graph.title,
-      nodes: (nodes ?? []).map(node => ({
-        id: node.id,
-        label: node.label,
-        is_center: node.is_center,
-        article_id: node.article_id ?? undefined,
-        color_variant: node.color_variant ?? undefined
-      })),
-      edges: (edges ?? []).map(edge => ({ source_id: edge.source_id, target_id: edge.target_id }))
     }
   },
 

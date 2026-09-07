@@ -9,44 +9,28 @@ class AppService {
     appState.user = user
   }
 
-  public navigateToTab(tab: NavTab): void {
+  public navigateToTab(tab: NavTab): Promise<unknown> {
     appState.activeTab = tab
-    if (tab === 'dashboard') router.push({ name: 'dashboard' })
-    else if (tab === 'search') router.push({ name: 'search' })
-    else if (tab === 'map') router.push({ name: 'map' })
-    else if (tab === 'notes') router.push({ name: 'notes' })
-    else if (tab === 'profile') router.push({ name: 'profile' })
+    if (tab === 'dashboard') return router.push({ name: 'dashboard' })
+    if (tab === 'search') return router.push({ name: 'search' })
+    return router.push({ name: 'notes' })
   }
 
-  public navigateToScreen(screen: ActiveScreen, articleId?: string): void {
-    router.push({ name: screen, params: articleId ? { id: articleId } : undefined })
+  public navigateToScreen(screen: ActiveScreen, articleId?: string): Promise<unknown> {
+    return router.push({ name: screen, params: articleId ? { id: articleId } : undefined })
   }
 
   public goBack(): void {
     router.back()
   }
 
-  public openArticle(articleId: string = 'article_watch'): void {
-    router.push({ name: 'article', params: { id: articleId } })
+  public openArticle(articleId: string = 'article_watch'): Promise<unknown> {
+    return router.push({ name: 'article', params: { id: articleId } })
   }
 
-  public openTree(): void {
-    router.push({ name: 'tree' })
-  }
-
-  public openZenMode(): void {
+  public openZenMode(): Promise<unknown> {
     const id = router.currentRoute.value.params.id
-    router.push({ name: 'zen', params: id ? { id } : undefined })
-  }
-
-  public openQuiz(articleId?: string): void {
-    const id = articleId || router.currentRoute.value.params.id
-    router.push({ name: 'quiz', params: id ? { id } : undefined })
-  }
-
-  public openPractice(articleId?: string): void {
-    const id = articleId || router.currentRoute.value.params.id
-    router.push({ name: 'practice', params: id ? { id } : undefined })
+    return router.push({ name: 'zen', params: id ? { id } : undefined })
   }
 
   public toggleToc(forceState?: boolean): void {
@@ -58,7 +42,7 @@ class AppService {
   }
 
   public toggleNoteModal(forceState?: boolean): void {
-    notesService.toggleNoteModal(forceState)
+    notesService.toggleCreateModal(forceState)
   }
 
   public showToast(message: string): void {

@@ -10,10 +10,15 @@ import type { ActiveScreen, NavTab } from '@/shared/types'
 import {
   ArticleTocDrawer,
   BreadcrumbPathModal,
+  knowledgeService,
   knowledgeState
 } from '@/modules/knowledge'
-import { searchService, searchState } from '@/modules/search'
-import { Home, BookOpen, BarChart2, Search, FileText, X, LogOut } from 'lucide-vue-next'
+import { expandPathTo, findBreadcrumbPath, type TreeNodeUIModel } from '@/modules/knowledge/adapters/knowledge.adapter'
+import { searchService } from '@/modules/search/services/search.service'
+import { searchState } from '@/modules/search/state/search.state'
+import { NoteCreateModal, notesService, notesState } from '@/modules/notes'
+import type { HighlightColor } from '@/api'
+import { Home, BookOpen, Search, X, LogOut } from 'lucide-vue-next'
 
 const route = useRoute()
 const isMobileSidebarOpen = ref(false)
@@ -28,8 +33,8 @@ interface TopNavTab {
 
 const topTabs: TopNavTab[] = [
   { screen: 'dashboard', tab: 'dashboard', icon: Home, label: 'Главная' },
-  { screen: 'notes', tab: 'notes', icon: BookOpen, label: 'Заметки' },
-  { screen: 'profile', tab: 'profile', icon: BarChart2, label: 'Статистика' }
+  { screen: 'search', tab: 'search', icon: Search, label: 'Поиск' },
+  { screen: 'notes', tab: 'notes', icon: BookOpen, label: 'Заметки' }
 ]
 
 const shouldShowBottomNav = computed(() => {
@@ -37,8 +42,28 @@ const shouldShowBottomNav = computed(() => {
 })
 
 const shouldShowArticleBreadcrumbs = computed(() => {
-  return ['article', 'zen', 'notes', 'quiz', 'practice'].includes(route.name as string)
+  return ['article', 'zen', 'notes'].includes(route.name as string) && !!knowledgeState.currentArticle
 })
+
+// Путь до текущей статьи в дереве — то же самое, что видно в BreadcrumbPathModal,
+// но всегда на виду в шапке и каждый уровень кликабелен.
+const breadcrumbNodes = computed<TreeNodeUIModel[]>(() => {
+  if (!knowledgeState.tree || !knowledgeState.selectedNodeId) return []
+  return findBreadcrumbPath(knowledgeState.tree, knowledgeState.selectedNodeId)
+})
+
+async function handleBreadcrumbClick(node: TreeNodeUIModel): Promise<void> {
+  if (node.hasArticle && node.articleId) {
+    appService.openArticle(node.articleId)
+    return
+  }
+  // Промежуточный уровень без своей статьи — просто раскрыть и показать его в дереве
+  knowledgeService.setSelectedNode(node.id)
+  if (knowledgeState.tree) expandPathTo(knowledgeState.tree, node.id)
+  isMobileSidebarOpen.value = true
+  await nextTick()
+  document.querySelector(`[data-node-id="${node.id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
 
 function handleNavigate(item: TopNavTab): void {
   isMobileSidebarOpen.value = false
@@ -53,8 +78,8 @@ function handleTabChange(tab: NavTab): void {
   appService.navigateToTab(tab)
 }
 
-// ⌘K/клик по подсказке — просто ставит фокус в уже видимое поле поиска
-// в сайдбаре (на мобильном сначала открывает сам сайдбар, где оно лежит)
+// ⌘K/клик по подсказке — просто ставит фокус в уже видимое поле фильтра
+// дерева в сайдбаре (на мобильном сначала открывает сам сайдбар)
 async function handleSearchFocus(): Promise<void> {
   isMobileSidebarOpen.value = true
   await nextTick()
@@ -65,10 +90,8 @@ function handleOpenArticle(articleId: string = 'article_watch'): void {
   appService.openArticle(articleId)
 }
 
-function handleSelectSearchResult(articleId: string): void {
-  searchService.setQuery('')
-  isMobileSidebarOpen.value = false
-  handleOpenArticle(articleId)
+function handleSaveNote(payload: { quoteText: string; comment: string; color: HighlightColor }): void {
+  void notesService.createNote(payload.quoteText, payload.comment, payload.color)
 }
 
 async function handleSignOut(): Promise<void> {
@@ -119,7 +142,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleGlobalKeydown))
         <span class="brand-logo">🧠</span>
         <div class="brand-info">
           <h2 class="brand-name">Система Знаний</h2>
-          <span class="brand-sub">Личная база & LMS</span>
+          <span class="brand-sub">Личная база знаний</span>
         </div>
         <button
           type="button"
@@ -155,7 +178,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleGlobalKeydown))
             ref="searchInputRef"
             type="text"
             class="search-input"
-            placeholder="Поиск по базе..."
+            placeholder="Фильтр по дереву..."
             :value="searchState.query"
             @input="searchService.setQuery(($event.target as HTMLInputElement).value)"
           />
@@ -217,59 +240,24 @@ onUnmounted(() => window.removeEventListener('keydown', handleGlobalKeydown))
             <span class="bar" />
           </button>
 
-          <div v-if="shouldShowArticleBreadcrumbs && knowledgeState.currentArticle" class="desktop-breadcrumbs">
-            <template
-              v-for="(crumb, index) in knowledgeState.currentArticle.categoryPathArray"
-              :key="crumb"
-            >
+          <nav v-if="shouldShowArticleBreadcrumbs" class="desktop-breadcrumbs" aria-label="Хлебные крошки">
+            <template v-for="(crumb, index) in breadcrumbNodes" :key="crumb.id">
               <span class="sep" v-if="index > 0">/</span>
-              <span :class="{ active: index === knowledgeState.currentArticle.categoryPathArray.length - 1 }">
-                {{ crumb }}
-              </span>
+              <button
+                type="button"
+                class="breadcrumb-crumb"
+                :class="{ active: index === breadcrumbNodes.length - 1 }"
+                @click="handleBreadcrumbClick(crumb)"
+              >
+                {{ crumb.title }}
+              </button>
             </template>
-          </div>
+          </nav>
         </div>
       </header>
 
       <main class="main-stage">
-        <!-- Пока в поиске есть запрос — справа список найденных статей вместо текущего экрана -->
-        <div v-if="searchState.query.trim()" class="search-results-panel">
-          <header class="search-results-panel__header">
-            <h2 class="search-results-panel__title">
-              Поиск: «{{ searchState.query }}»
-            </h2>
-            <button
-              type="button"
-              class="search-results-panel__close"
-              aria-label="Закрыть результаты поиска"
-              @click="searchService.setQuery('')"
-            >
-              <X class="icon-sm" />
-            </button>
-          </header>
-
-          <p v-if="searchState.isLoading" class="search-results-panel__hint">Ищем…</p>
-          <p v-else-if="searchState.bestMatches.length === 0" class="search-results-panel__hint">
-            Статьи не найдены.
-          </p>
-          <div v-else class="search-results-panel__list">
-            <button
-              v-for="item in searchState.bestMatches"
-              :key="item.id"
-              type="button"
-              class="search-result-card"
-              @click="handleSelectSearchResult(item.articleId)"
-            >
-              <FileText class="search-result-card__icon" />
-              <div class="search-result-card__body">
-                <span class="search-result-card__title">{{ item.title }}</span>
-                <span class="search-result-card__path">{{ item.categoryPath }}</span>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <slot v-else />
+        <slot />
       </main>
 
       <BottomNavigation
@@ -295,6 +283,12 @@ onUnmounted(() => window.removeEventListener('keydown', handleGlobalKeydown))
       :is-open="knowledgeState.isBreadcrumbsOpen"
       @close="appService.toggleBreadcrumbs(false)"
       @go-to-article="(articleId) => { appService.toggleBreadcrumbs(false); handleOpenArticle(articleId) }"
+    />
+
+    <NoteCreateModal
+      :is-open="notesState.isCreateModalOpen"
+      @close="notesService.toggleCreateModal(false)"
+      @save="handleSaveNote"
     />
 
     <Transition name="toast">
@@ -624,9 +618,31 @@ onUnmounted(() => window.removeEventListener('keydown', handleGlobalKeydown))
     gap: 0.5rem;
     font-size: 0.875rem;
     color: #64748b;
-    
+
     .sep { color: #cbd5e1; }
-    .active { color: #0f172a; font-weight: 600; }
+
+    .breadcrumb-crumb {
+      background: none;
+      border: none;
+      padding: 0.15rem 0.3rem;
+      margin: -0.15rem -0.3rem;
+      border-radius: 6px;
+      font: inherit;
+      font-size: 0.875rem;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      &:hover { background: #f1f5f9; color: #0f172a; }
+
+      &.active {
+        color: #0f172a;
+        font-weight: 600;
+        cursor: default;
+
+        &:hover { background: none; }
+      }
+    }
 
     @media (max-width: 600px) { display: none; }
   }
@@ -637,108 +653,6 @@ onUnmounted(() => window.removeEventListener('keydown', handleGlobalKeydown))
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-}
-
-.search-results-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1.5rem;
-  max-width: 720px;
-  width: 100%;
-  margin: 0 auto;
-
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
-  &__title {
-    margin: 0;
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: #0f172a;
-  }
-
-  &__close {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: none;
-    background: #f1f5f9;
-    color: #64748b;
-    cursor: pointer;
-    flex-shrink: 0;
-
-    &:hover { background: #e2e8f0; color: #0f172a; }
-
-    .icon-sm { width: 14px; height: 14px; }
-  }
-
-  &__hint {
-    margin: 1rem 0 0;
-    color: #94a3b8;
-    font-size: 0.875rem;
-    text-align: center;
-  }
-
-  &__list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-}
-
-.search-result-card {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-  transition: all 0.15s ease;
-
-  &:hover {
-    border-color: #6366f1;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
-  }
-
-  &__icon {
-    width: 18px;
-    height: 18px;
-    color: #6366f1;
-    flex-shrink: 0;
-  }
-
-  &__body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    min-width: 0;
-  }
-
-  &__title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #0f172a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__path {
-    font-size: 0.75rem;
-    color: #64748b;
-  }
 }
 
 .mobile-bottom-nav {

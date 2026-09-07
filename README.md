@@ -1,38 +1,36 @@
-# Edu Knowledge Base & LMS
+# Личная база знаний
 
-Vue 3 + TypeScript (strict) + Vite. Architecture: [project_architecture_template.md](./project_architecture_template.md).
+Vue 3 + TypeScript (strict) + Vite + Vue Router. Архитектура: [project_architecture_template.md](./project_architecture_template.md).
 
-## Local dev
+Личное мобильно-ориентированное приложение для чтения и повторения заранее подготовленных тем: дерево тем всегда под рукой в сайдбаре, статьи, заметки, полнотекстовый поиск. Требует подключённый Supabase-проект — офлайн-режима нет.
 
-```bash
-npm install
-npm run dev
-```
+## Быстрый старт
 
-Without any Supabase configuration the app runs fully offline against `src/api/mock-data.ts` — this is the default and needs no setup.
-
-## Connecting Supabase (optional)
-
-1. Create a project at [supabase.com](https://supabase.com).
-2. In the SQL editor, run every file in [supabase/migrations/](./supabase/migrations/) in order. They create all tables, RLS policies, and a trigger that auto-creates a `profiles` row on sign-up.
-3. Copy `.env.example` to `.env` and fill in `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (Settings → API).
-4. `npm run dev`, sign up once from the app's login screen (this is your personal account).
-5. Seed shared content (knowledge tree, article, quiz, practice task, graph) plus your personal demo data (notes, daily tasks, stats, progress) — matching what the offline mock shows:
+1. Создайте проект на [supabase.com](https://supabase.com).
+2. В SQL Editor выполните по очереди все файлы из [supabase/migrations/](./supabase/migrations/). Они создают все таблицы, RLS-политики и триггер, который создаёт строку `profiles` при регистрации.
+3. Скопируйте `.env.example` в `.env`, впишите `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (Settings → API).
+4. `npm install && npm run dev`, зарегистрируйтесь один раз через экран входа (это ваш личный аккаунт).
+5. Залейте демо-контент (дерево тем, статьи) и свои личные данные (заметки, прогресс) — по образцу `src/api/mock-data.ts`:
    ```bash
-   # add SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (Settings → API → service_role)
-   # and SEED_USER_EMAIL (the account from step 4) to .env, then:
+   # добавьте в .env SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (Settings → API → service_role)
+   # и SEED_USER_EMAIL (аккаунт из шага 4), затем:
    npm run seed
    ```
 
-`src/api/client.ts` automatically switches between mock data and real Supabase queries based on whether `VITE_SUPABASE_*` is set — no code changes needed either way. Table shapes are typed in `src/api/database.types.ts`; regenerate it with `supabase gen types typescript` once you have a live project.
+Дальнейшие статьи добавляются напрямую через Supabase Table Editor, без правок кода — см. [CONTENT_GUIDE.md](./CONTENT_GUIDE.md).
 
-## Adding content (articles, images) without code changes
+## Что внутри
 
-Once Supabase is connected, new articles/sections/images are just rows in tables — no code, no redeploy. See [CONTENT_GUIDE.md](./CONTENT_GUIDE.md).
+- **Дерево тем** — постоянно на виду в сайдбаре, с живой фильтрацией по названию.
+- **Статьи** — обычное чтение и Zen-режим без отвлечений.
+- **Заметки** — цитаты и комментарии, привязанные к статье.
+- **Поиск** — полнотекстовый, по статьям/разделам/заметкам, отдельный раздел.
 
-## Scripts
+Тесты/практика, карта знаний и статистика были в архитектуре шаблона, но убраны из этого приложения как требующие ручного наполнения контента, не соответствующего цели «читать и повторять, а не создавать».
 
-- `npm run dev` — dev server
-- `npm run build` — type-check (`vue-tsc -b`) + production build
-- `npm run test` — Vitest unit tests
-- `npm run seed` — push mock content/demo data into a configured Supabase project
+## Скрипты
+
+- `npm run dev` — dev-сервер
+- `npm run build` — проверка типов (`vue-tsc -b`) + прод-сборка
+- `npm run test` — юнит-тесты (Vitest)
+- `npm run seed` — залить контент из `mock-data.ts` в подключённый Supabase-проект

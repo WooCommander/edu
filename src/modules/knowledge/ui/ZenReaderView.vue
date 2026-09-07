@@ -1,11 +1,28 @@
 <script setup lang="ts">
+import { onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { appService } from '@/app/services/app-service'
 import { CodeBlock } from '@/shared/ui'
 import { knowledgeService } from '../services/knowledge.service'
 import { knowledgeState } from '../state/knowledge.state'
 
-const emit = defineEmits<{
-  (e: 'exit'): void
-}>()
+const route = useRoute()
+
+async function loadArticleData(): Promise<void> {
+  const routeId = (route.params.id as string) || 'article_watch'
+  if (knowledgeState.currentArticle?.id !== routeId) {
+    await knowledgeService.loadArticle(routeId)
+  }
+}
+
+onMounted(() => {
+  void loadArticleData()
+})
+
+watch(
+  () => route.params.id,
+  () => void loadArticleData()
+)
 
 const fontSizeClasses = ['zen-text--normal', 'zen-text--large', 'zen-text--xl']
 </script>
@@ -18,7 +35,7 @@ const fontSizeClasses = ['zen-text--normal', 'zen-text--large', 'zen-text--xl']
   >
     <!-- Minimalist Header -->
     <header class="zen-header">
-      <button type="button" class="zen-btn" title="Назад" @click="emit('exit')">
+      <button type="button" class="zen-btn" title="Назад" @click="appService.goBack()">
         ‹
       </button>
 
@@ -31,7 +48,7 @@ const fontSizeClasses = ['zen-text--normal', 'zen-text--large', 'zen-text--xl']
         >
           Aa
         </button>
-        <button type="button" class="zen-btn" title="Закрыть дзен" @click="emit('exit')">
+        <button type="button" class="zen-btn" title="Закрыть дзен" @click="appService.goBack()">
           ✕
         </button>
       </div>

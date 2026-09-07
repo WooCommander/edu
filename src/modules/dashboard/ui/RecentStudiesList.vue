@@ -10,7 +10,6 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   (e: 'selectItem', item: RecentStudyUIModel): void
-  (e: 'viewAll'): void
 }>()
 </script>
 
@@ -18,9 +17,6 @@ const emit = defineEmits<{
   <section class="recent-studies">
     <div class="recent-studies__header">
       <h2 class="recent-studies__title">Недавно изученное</h2>
-      <button type="button" class="recent-studies__see-all-btn" @click="emit('viewAll')">
-        Смотреть все
-      </button>
     </div>
 
     <div class="recent-studies__list">

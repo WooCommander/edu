@@ -1,10 +1,9 @@
 /**
  * One-off seed script: pushes the content + demo personal data from
- * src/api/mock-data.ts into a real Supabase project, so the app looks the
- * same as the offline/mock demo once VITE_SUPABASE_URL/ANON_KEY are set.
+ * src/api/mock-data.ts into a real Supabase project.
  *
  * Usage:
- *   1. Apply supabase/migrations/0001_init.sql to your project (SQL editor
+ *   1. Apply every file in supabase/migrations/ to your project (SQL editor
  *      or `supabase db push`).
  *   2. Sign up once in the running app (creates your auth user + profile).
  *   3. Run:
@@ -12,22 +11,17 @@
  *      with SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and SEED_USER_EMAIL set
  *      (service_role key: Supabase dashboard -> Settings -> API).
  *
- * Content tables (tree/articles/quiz/practice/graph) are shared and always
- * reseeded. Per-user tables (notes/tasks/stats/progress) are written for
- * the account matching SEED_USER_EMAIL.
+ * Content tables (tree/articles) are shared and always reseeded. Per-user
+ * tables (notes/progress) are written for the account matching
+ * SEED_USER_EMAIL.
  */
 import { createClient } from '@supabase/supabase-js'
 import type { Database, TreeNodeRow, ArticleSectionRow } from '../src/api/database.types.js'
 import {
   mockArticles,
   mockContinueItem,
-  mockDailyTasks,
-  mockKnowledgeGraph,
   mockKnowledgeTree,
-  mockLearningStats,
   mockNotes,
-  mockPracticeTask,
-  mockQuizQuestions,
   mockRecentStudies,
   mockUser,
   mockWatchArticle
@@ -160,36 +154,6 @@ async function seedContent(): Promise<void> {
   const { error: blocksError } = await supabase.from('article_blocks').upsert(blockRows)
   if (blocksError) throw blocksError
 
-  const { error: quizError } = await supabase.from('quiz_questions').upsert(mockQuizQuestions)
-  if (quizError) throw quizError
-
-  const { error: practiceError } = await supabase.from('practice_tasks').upsert([mockPracticeTask])
-  if (practiceError) throw practiceError
-
-  const { error: graphError } = await supabase
-    .from('knowledge_graphs')
-    .upsert({ id: mockKnowledgeGraph.id, title: mockKnowledgeGraph.title })
-  if (graphError) throw graphError
-
-  const nodeRows = mockKnowledgeGraph.nodes.map(node => ({
-    graph_id: mockKnowledgeGraph.id,
-    id: node.id,
-    label: node.label,
-    is_center: node.is_center,
-    article_id: node.article_id ?? null,
-    color_variant: node.color_variant ?? null
-  }))
-  const { error: graphNodesError } = await supabase.from('knowledge_graph_nodes').upsert(nodeRows)
-  if (graphNodesError) throw graphNodesError
-
-  const edgeRows = mockKnowledgeGraph.edges.map(edge => ({
-    graph_id: mockKnowledgeGraph.id,
-    source_id: edge.source_id,
-    target_id: edge.target_id
-  }))
-  const { error: graphEdgesError } = await supabase.from('knowledge_graph_edges').upsert(edgeRows)
-  if (graphEdgesError) throw graphEdgesError
-
   console.log(
     `Content seeded: ${treeRows.length} tree nodes, ${articleRows.length} article(s), ${sectionRows.length} sections, ${blockRows.length} blocks.`
   )
@@ -257,11 +221,6 @@ async function seedUserData(userId: string): Promise<void> {
   })
   if (continueStudyError) throw continueStudyError
 
-  const { error: dailyTasksError } = await supabase
-    .from('daily_tasks')
-    .upsert(mockDailyTasks.map(task => ({ ...task, user_id: userId, task_date: new Date().toISOString().slice(0, 10) })))
-  if (dailyTasksError) throw dailyTasksError
-
   const now = Date.now()
   const { error: recentStudiesError } = await supabase.from('recent_studies').upsert(
     mockRecentStudies.map((recent, index) => ({
@@ -274,29 +233,6 @@ async function seedUserData(userId: string): Promise<void> {
     }))
   )
   if (recentStudiesError) throw recentStudiesError
-
-  const { error: statsError } = await supabase.from('learning_stats').upsert({
-    user_id: userId,
-    period: mockLearningStats.period,
-    articles_studied: mockLearningStats.articles_studied,
-    articles_growth_percent: mockLearningStats.articles_growth_percent,
-    study_time_formatted: mockLearningStats.study_time_formatted,
-    study_time_growth_formatted: mockLearningStats.study_time_growth_formatted,
-    tests_completed: mockLearningStats.tests_completed,
-    tests_growth_count: mockLearningStats.tests_growth_count
-  })
-  if (statsError) throw statsError
-
-  const { error: categoryProgressError } = await supabase.from('category_progress').upsert(
-    mockLearningStats.category_progress.map((category, index) => ({
-      user_id: userId,
-      category_id: category.category_id,
-      title: category.title,
-      progress_percent: category.progress_percent,
-      sort_order: index
-    }))
-  )
-  if (categoryProgressError) throw categoryProgressError
 
   console.log(`Personal data seeded for ${seedUserEmail} (${userId}).`)
 }

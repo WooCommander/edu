@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { FileText, CheckCircle2, ChevronRight, ChevronDown } from 'lucide-vue-next'
 import type { TreeNodeUIModel } from '../adapters/knowledge.adapter'
 
@@ -16,12 +16,23 @@ const emit = defineEmits<{
   (e: 'selectNode', node: TreeNodeUIModel): void
 }>()
 
-const isExpanded = ref(props.node.level === 1)
+// node.isExpanded is only the *initial* hint (default depth, or force-opened
+// to reveal a search match) — after mount, the local toggle is the single
+// source of truth, so every node can be collapsed regardless of its level.
+const isExpanded = ref(!!props.node.isExpanded)
 const isFolder = computed(() => props.node.children && props.node.children.length > 0)
 const isSelected = computed(() => props.selectedNodeId === props.node.id)
-// A branch can be force-opened from outside (e.g. to reveal a search match)
-// via node.isExpanded, without touching the user's own manual toggle state.
-const showChildren = computed(() => isFolder.value && (isExpanded.value || !!props.node.isExpanded))
+const showChildren = computed(() => isFolder.value && isExpanded.value)
+
+// A branch can still be force-opened later from outside (e.g. a search
+// match appearing under a previously collapsed node) without fighting a
+// manual collapse in the other direction.
+watch(
+  () => props.node.isExpanded,
+  forced => {
+    if (forced) isExpanded.value = true
+  }
+)
 
 function toggleExpand(e: MouseEvent): void {
   e.stopPropagation()
@@ -39,6 +50,7 @@ function handleNodeClick(): void {
   <div class="tree-node" :class="{ 'tree-node--selected': isSelected }">
     <div
       class="tree-node__row"
+      :data-node-id="props.node.id"
       :style="{ paddingLeft: `${Math.min((props.node.level - 1) * 8, 80)}px` }"
       @click="handleNodeClick"
     >

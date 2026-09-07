@@ -1,13 +1,10 @@
 <script setup lang="ts">
+import { appService } from '@/app/services/app-service'
 import { BaseCard, BaseInput, BaseTabs } from '@/shared/ui'
 import type { TabItem } from '@/shared/ui'
 import { searchService } from '../services/search.service'
 import { searchState } from '../state/search.state'
 import type { SearchResultUIModel } from '../adapters/search.adapter'
-
-const emit = defineEmits<{
-  (e: 'selectResult', result: SearchResultUIModel): void
-}>()
 
 const searchTabs: TabItem[] = [
   { key: 'all', label: 'Все' },
@@ -18,6 +15,10 @@ const searchTabs: TabItem[] = [
 
 function handleTabChange(key: string): void {
   searchService.setFilter(key)
+}
+
+function handleSelectResult(result: SearchResultUIModel): void {
+  appService.openArticle(result.articleId)
 }
 </script>
 
@@ -67,7 +68,7 @@ function handleTabChange(key: string): void {
               padding="sm"
               clickable
               class="result-card"
-              @click="emit('selectResult', item)"
+              @click="handleSelectResult(item)"
             >
               <div class="result-card__body">
                 <h4 class="result-card__title">{{ item.title }}</h4>
@@ -92,7 +93,7 @@ function handleTabChange(key: string): void {
               padding="sm"
               clickable
               class="result-card result-card--other"
-              @click="emit('selectResult', item)"
+              @click="handleSelectResult(item)"
             >
               <div class="result-card__icon">
                 <span>{{ item.entityType === 'article' ? '📄' : item.entityType === 'note' ? '📝' : '📁' }}</span>
