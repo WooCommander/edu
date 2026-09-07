@@ -273,7 +273,7 @@ export const mockKnowledgeTree: TreeNodeDTO = {
           title: 'Уроки: типизированные компоненты',
           level: 3,
           has_article: false,
-          children_count: 2,
+          children_count: 6,
           children: [
             {
               id: 'node_lesson1',
@@ -291,6 +291,42 @@ export const mockKnowledgeTree: TreeNodeDTO = {
               level: 4,
               has_article: true,
               article_id: 'article_typed_vmodel_lesson2',
+              children_count: 0
+            },
+            {
+              id: 'node_lesson3',
+              code: '1.2.5.3.',
+              title: 'Урок 3. Состояние загрузки через discriminated union',
+              level: 4,
+              has_article: true,
+              article_id: 'article_async_state_lesson3',
+              children_count: 0
+            },
+            {
+              id: 'node_lesson4',
+              code: '1.2.5.4.',
+              title: 'Урок 4. Нормализация данных API на границе приложения',
+              level: 4,
+              has_article: true,
+              article_id: 'article_api_normalization_lesson4',
+              children_count: 0
+            },
+            {
+              id: 'node_lesson5',
+              code: '1.2.5.5.',
+              title: 'Урок 5. Связанные типы через generic и discriminated union',
+              level: 4,
+              has_article: true,
+              article_id: 'article_generic_union_lesson5',
+              children_count: 0
+            },
+            {
+              id: 'node_lesson6',
+              code: '1.2.5.6.',
+              title: 'Урок 6. Исчерпывающая проверка вариантов через never',
+              level: 4,
+              has_article: true,
+              article_id: 'article_exhaustive_never_lesson6',
               children_count: 0
             }
           ]
@@ -1597,6 +1633,628 @@ const updateTitle = (value: string): void => {
   total_pages: 13
 }
 
+export const mockAsyncStateLesson3Article: ArticleDTO = {
+  id: 'article_async_state_lesson3',
+  code: '1.2.5.3.',
+  title: 'Урок 3. Состояние загрузки через discriminated union',
+  tags: ['Vue 3', 'TypeScript', 'Продвинутый Vue'],
+  difficulty: 'Продвинутый',
+  read_time_min: 8,
+  category_path: ['Vue 3', 'Продвинутый Vue 3', 'Уроки: типизированные компоненты', 'Урок 3. Состояние загрузки через discriminated union'],
+  sections: [
+    { id: 'lesson3_sec_1', code: '1.', title: 'Введение', is_read: false },
+    { id: 'lesson3_sec_2', code: '2.', title: 'Пример: типизированный загрузчик', is_read: false },
+    { id: 'lesson3_sec_3', code: '3.', title: 'Использование в компоненте', is_read: false },
+    { id: 'lesson3_sec_4', code: '4.', title: 'Упражнение: состояние отмены', is_read: false },
+    { id: 'lesson3_sec_5', code: '5.', title: 'Быстрое повторение', is_read: false }
+  ],
+  blocks: [
+    {
+      id: 'lesson3_b_1',
+      type: 'paragraph',
+      content:
+        'Частая ошибка — хранить isLoading, data и error в отдельных ref. Тогда возможны противоречивые состояния: одновременно есть ошибка, данные и активная загрузка.'
+    },
+    { id: 'lesson3_b_2', type: 'paragraph', content: 'Лучше описать только допустимые состояния:' },
+    { id: 'lesson3_b_3', type: 'heading', level: 2, content: 'Пример: типизированный загрузчик' },
+    {
+      id: 'lesson3_b_4',
+      type: 'code',
+      language: 'typescript',
+      content: `// use-async-state.ts
+import { readonly, shallowRef } from 'vue';
+
+type AsyncState<T> =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success'; data: T }
+  | { status: 'error'; error: Error };
+
+const normalizeError = (error: unknown): Error => {
+  return error instanceof Error
+    ? error
+    : new Error('Неизвестная ошибка');
+};
+
+export const useAsyncState = <T>(
+  loader: () => Promise<T>,
+) => {
+  const state = shallowRef<AsyncState<T>>({
+    status: 'idle',
+  });
+
+  const execute = async (): Promise<void> => {
+    state.value = { status: 'loading' };
+
+    try {
+      const data = await loader();
+
+      state.value = {
+        status: 'success',
+        data,
+      };
+    } catch (error: unknown) {
+      state.value = {
+        status: 'error',
+        error: normalizeError(error),
+      };
+    }
+  };
+
+  return {
+    state: readonly(state),
+    execute,
+  };
+};`
+    },
+    { id: 'lesson3_b_5', type: 'heading', level: 2, content: 'Использование в компоненте' },
+    {
+      id: 'lesson3_b_6',
+      type: 'code',
+      language: 'vue',
+      content: `<script setup lang="ts">
+import { useAsyncState } from './use-async-state';
+
+interface Task {
+  Id: number;
+  Name: string;
+}
+
+const getTask = async (): Promise<Task> => {
+  return {
+    Id: 42,
+    Name: 'Типизировать загрузчик',
+  };
+};
+
+const { state, execute } = useAsyncState(getTask);
+</script>
+
+<template>
+  <button
+    :disabled="state.status === 'loading'"
+    @click="execute"
+  >
+    Загрузить
+  </button>
+
+  <span v-if="state.status === 'loading'">
+    Загрузка…
+  </span>
+
+  <p v-else-if="state.status === 'success'">
+    {{ state.data.Name }}
+  </p>
+
+  <p v-else-if="state.status === 'error'">
+    {{ state.error.message }}
+  </p>
+</template>`
+    },
+    {
+      id: 'lesson3_b_7',
+      type: 'paragraph',
+      content: "После проверки state.status === 'success' TypeScript сам понимает, что state.data существует."
+    },
+    { id: 'lesson3_b_8', type: 'heading', level: 2, content: 'Упражнение' },
+    { id: 'lesson3_b_9', type: 'paragraph', content: 'Добавьте состояние отмены:' },
+    {
+      id: 'lesson3_b_10',
+      type: 'code',
+      language: 'typescript',
+      content: `{ status: 'cancelled' }`
+    },
+    { id: 'lesson3_b_11', type: 'paragraph', content: 'И метод:' },
+    {
+      id: 'lesson3_b_12',
+      type: 'code',
+      language: 'typescript',
+      content: `const cancel = (): void => {
+  // Изменить состояние только во время загрузки.
+};`
+    },
+    {
+      id: 'lesson3_b_13',
+      type: 'paragraph',
+      content: "Условие: cancel() не должен менять состояния idle, success и error. any не используйте."
+    },
+    { id: 'lesson3_b_14', type: 'heading', level: 2, content: 'Быстрое повторение' },
+    { id: 'lesson3_b_15', type: 'paragraph', content: 'Почему это хуже?' },
+    {
+      id: 'lesson3_b_16',
+      type: 'code',
+      language: 'typescript',
+      content: `const data = ref<Task>();
+const error = ref<Error>();
+const isLoading = ref(false);`
+    },
+    {
+      id: 'lesson3_b_17',
+      type: 'paragraph',
+      content:
+        'Ответ: три независимых значения допускают невозможные комбинации. Объединение AsyncState<T> делает такие состояния непредставимыми и упрощает шаблон.'
+    }
+  ],
+  likes_count: 0,
+  comments_count: 0,
+  is_favorite: false,
+  current_page_index: 0,
+  total_pages: 14
+}
+
+export const mockApiNormalizationLesson4Article: ArticleDTO = {
+  id: 'article_api_normalization_lesson4',
+  code: '1.2.5.4.',
+  title: 'Урок 4. Нормализация данных API на границе приложения',
+  tags: ['Vue 3', 'TypeScript', 'Продвинутый Vue'],
+  difficulty: 'Продвинутый',
+  read_time_min: 9,
+  category_path: ['Vue 3', 'Продвинутый Vue 3', 'Уроки: типизированные компоненты', 'Урок 4. Нормализация данных API на границе приложения'],
+  sections: [
+    { id: 'lesson4_sec_1', code: '1.', title: 'Введение', is_read: false },
+    { id: 'lesson4_sec_2', code: '2.', title: 'Пример: mapper для DTO', is_read: false },
+    { id: 'lesson4_sec_3', code: '3.', title: 'Использование в компоненте', is_read: false },
+    { id: 'lesson4_sec_4', code: '4.', title: 'Упражнение: добавление Queue', is_read: false },
+    { id: 'lesson4_sec_5', code: '5.', title: 'Быстрое повторение', is_read: false }
+  ],
+  blocks: [
+    {
+      id: 'lesson4_b_1',
+      type: 'paragraph',
+      content:
+        'Ответ сервера часто содержит null, необязательные поля и PascalCase. Не стоит распространять такую структуру по всем компонентам. Один раз преобразуйте DTO в удобную модель приложения.'
+    },
+    { id: 'lesson4_b_2', type: 'heading', level: 2, content: 'Пример: mapper для DTO' },
+    {
+      id: 'lesson4_b_3',
+      type: 'code',
+      language: 'typescript',
+      content: `// task-mapper.ts
+
+export interface TaskResponse {
+  Id: number;
+  Name?: string | null;
+  Performers?: {
+    Id: string;
+    Name?: string | null;
+  }[] | null;
+}
+
+export interface TaskModel {
+  id: number;
+  name: string;
+  performers: readonly {
+    id: string;
+    name: string;
+  }[];
+}
+
+export const mapTaskResponse = (
+  response: TaskResponse,
+): TaskModel => {
+  return {
+    id: response.Id,
+    name: response.Name?.trim() || 'Без названия',
+    performers: (response.Performers ?? []).map((performer) => ({
+      id: performer.Id,
+      name: performer.Name?.trim() || 'Неизвестный пользователь',
+    })),
+  };
+};`
+    },
+    { id: 'lesson4_b_4', type: 'heading', level: 2, content: 'Использование в компоненте' },
+    {
+      id: 'lesson4_b_5',
+      type: 'code',
+      language: 'vue',
+      content: `<script setup lang="ts">
+import { computed } from 'vue';
+import {
+  mapTaskResponse,
+  type TaskResponse,
+} from './task-mapper';
+
+const props = defineProps<{
+  response: TaskResponse;
+}>();
+
+const task = computed(() => {
+  return mapTaskResponse(props.response);
+});
+</script>
+
+<template>
+  <h2>{{ task.name }}</h2>
+
+  <ul>
+    <li
+      v-for="performer in task.performers"
+      :key="performer.id"
+    >
+      {{ performer.name }}
+    </li>
+  </ul>
+</template>`
+    },
+    { id: 'lesson4_b_6', type: 'paragraph', content: 'Теперь внутри приложения:' },
+    {
+      id: 'lesson4_b_7',
+      type: 'list',
+      content:
+        'task.name всегда является строкой\nperformers всегда является массивом\nкомпоненты не повторяют проверки на null\nизменение контракта API исправляется в одном mapper'
+    },
+    { id: 'lesson4_b_8', type: 'heading', level: 2, content: 'Упражнение' },
+    { id: 'lesson4_b_9', type: 'paragraph', content: 'Добавьте в TaskResponse:' },
+    {
+      id: 'lesson4_b_10',
+      type: 'code',
+      language: 'typescript',
+      content: `Queue?: {
+  Id: string;
+  Name?: string | null;
+} | null;`
+    },
+    { id: 'lesson4_b_11', type: 'paragraph', content: 'А в TaskModel:' },
+    {
+      id: 'lesson4_b_12',
+      type: 'code',
+      language: 'typescript',
+      content: `queue: {
+  id: string;
+  name: string;
+} | null;`
+    },
+    {
+      id: 'lesson4_b_13',
+      type: 'paragraph',
+      content:
+        "Дополните mapper. Если очередь отсутствует, возвращайте null; если отсутствует её название — строку 'Без названия'. Не используйте any и as."
+    },
+    { id: 'lesson4_b_14', type: 'heading', level: 2, content: 'Быстрое повторение' },
+    { id: 'lesson4_b_15', type: 'paragraph', content: 'Почему так делать опасно?' },
+    {
+      id: 'lesson4_b_16',
+      type: 'code',
+      language: 'typescript',
+      content: `const task = response as TaskModel;`
+    },
+    {
+      id: 'lesson4_b_17',
+      type: 'paragraph',
+      content:
+        'Ответ: as ничего не преобразует во время выполнения. PascalCase останется PascalCase, null не исчезнет, а TypeScript просто перестанет предупреждать об ошибках. Mapper действительно создаёт корректную модель.'
+    }
+  ],
+  likes_count: 0,
+  comments_count: 0,
+  is_favorite: false,
+  current_page_index: 0,
+  total_pages: 14
+}
+
+export const mockGenericUnionLesson5Article: ArticleDTO = {
+  id: 'article_generic_union_lesson5',
+  code: '1.2.5.5.',
+  title: 'Урок 5. Связанные типы через generic и discriminated union',
+  tags: ['Vue 3', 'TypeScript', 'Продвинутый Vue'],
+  difficulty: 'Продвинутый',
+  read_time_min: 9,
+  category_path: ['Vue 3', 'Продвинутый Vue 3', 'Уроки: типизированные компоненты', 'Урок 5. Связанные типы через generic и discriminated union'],
+  sections: [
+    { id: 'lesson5_sec_1', code: '1.', title: 'Введение', is_read: false },
+    { id: 'lesson5_sec_2', code: '2.', title: 'Пример: TaskDrawerSettings', is_read: false },
+    { id: 'lesson5_sec_3', code: '3.', title: 'Использование в компоненте', is_read: false },
+    { id: 'lesson5_sec_4', code: '4.', title: 'Событие открытия шторки', is_read: false },
+    { id: 'lesson5_sec_5', code: '5.', title: 'Упражнение: режим copy', is_read: false },
+    { id: 'lesson5_sec_6', code: '6.', title: 'Быстрое повторение', is_read: false }
+  ],
+  blocks: [
+    {
+      id: 'lesson5_b_1',
+      type: 'paragraph',
+      content:
+        'Generic полезен, когда допустимые поля объекта зависят от его режима. Например, при создании задачи нужен ParentTaskId, а при редактировании — TaskId.'
+    },
+    { id: 'lesson5_b_2', type: 'heading', level: 2, content: 'Пример: TaskDrawerSettings' },
+    {
+      id: 'lesson5_b_3',
+      type: 'code',
+      language: 'typescript',
+      content: `// task-drawer-settings.ts
+
+export type TaskDrawerMode = 'create' | 'edit';
+
+interface SettingsByMode {
+  create: {
+    ParentTaskId?: number;
+    QueueId: string;
+  };
+  edit: {
+    TaskId: number;
+  };
+}
+
+export type TaskDrawerSettings<
+  T extends TaskDrawerMode = TaskDrawerMode,
+> = T extends TaskDrawerMode
+  ? {
+      Mode: T;
+      ProjectId: number;
+      NamespaceId: string;
+    } & SettingsByMode[T]
+  : never;`
+    },
+    {
+      id: 'lesson5_b_4',
+      type: 'paragraph',
+      content: 'Теперь TypeScript связывает режим с его полями:'
+    },
+    {
+      id: 'lesson5_b_5',
+      type: 'code',
+      language: 'typescript',
+      content: `const createSettings: TaskDrawerSettings<'create'> = {
+  Mode: 'create',
+  ProjectId: 10,
+  NamespaceId: 'main',
+  QueueId: 'queue-1',
+};
+
+const editSettings: TaskDrawerSettings<'edit'> = {
+  Mode: 'edit',
+  ProjectId: 10,
+  NamespaceId: 'main',
+  TaskId: 42,
+};`
+    },
+    { id: 'lesson5_b_6', type: 'heading', level: 2, content: 'Использование в компоненте' },
+    {
+      id: 'lesson5_b_7',
+      type: 'code',
+      language: 'vue',
+      content: `<script setup lang="ts">
+import type { TaskDrawerSettings } from './task-drawer-settings';
+
+const props = defineProps<{
+  settings: TaskDrawerSettings;
+}>();
+
+const getTitle = (settings: TaskDrawerSettings): string => {
+  switch (settings.Mode) {
+    case 'create':
+      return \`Создание в очереди \${settings.QueueId}\`;
+
+    case 'edit':
+      return \`Редактирование задачи №\${settings.TaskId}\`;
+  }
+};
+</script>
+
+<template>
+  <h2>{{ getTitle(settings) }}</h2>
+</template>`
+    },
+    {
+      id: 'lesson5_b_8',
+      type: 'paragraph',
+      content: 'После проверки Mode TypeScript автоматически определяет доступные поля. Передать режим edit без TaskId уже нельзя.'
+    },
+    { id: 'lesson5_b_9', type: 'heading', level: 2, content: 'Событие открытия шторки' },
+    { id: 'lesson5_b_10', type: 'paragraph', content: 'В интерфейсе события можно писать так:' },
+    {
+      id: 'lesson5_b_11',
+      type: 'code',
+      language: 'typescript',
+      content: `export interface OpenTaskDrawerDetail {
+  projectId: number;
+  namespaceId: string;
+  oldParams?: TaskDrawerSettings;
+}`
+    },
+    {
+      id: 'lesson5_b_12',
+      type: 'paragraph',
+      content: 'Значение generic по умолчанию позволяет не указывать тип вручную, сохраняя объединение всех допустимых вариантов.'
+    },
+    { id: 'lesson5_b_13', type: 'heading', level: 2, content: 'Упражнение' },
+    { id: 'lesson5_b_14', type: 'paragraph', content: 'Добавьте режим:' },
+    {
+      id: 'lesson5_b_15',
+      type: 'code',
+      language: 'typescript',
+      content: `type TaskDrawerMode = 'create' | 'edit' | 'copy';`
+    },
+    { id: 'lesson5_b_16', type: 'paragraph', content: 'Для copy обязательны:' },
+    {
+      id: 'lesson5_b_17',
+      type: 'code',
+      language: 'typescript',
+      content: `{
+  SourceTaskId: number;
+  QueueId: string;
+}`
+    },
+    {
+      id: 'lesson5_b_18',
+      type: 'paragraph',
+      content: 'Дополните SettingsByMode и getTitle(). TypeScript должен потребовать обработку нового режима.'
+    },
+    { id: 'lesson5_b_19', type: 'heading', level: 2, content: 'Быстрое повторение' },
+    { id: 'lesson5_b_20', type: 'paragraph', content: 'Почему нежелательно писать:' },
+    {
+      id: 'lesson5_b_21',
+      type: 'code',
+      language: 'typescript',
+      content: `TaskDrawerSettings<any>`
+    },
+    {
+      id: 'lesson5_b_22',
+      type: 'paragraph',
+      content:
+        'any отключает связь между Mode и остальными полями. Ограничение generic перестаёт защищать объект, поэтому можно случайно передать несовместимую комбинацию настроек.'
+    }
+  ],
+  likes_count: 0,
+  comments_count: 0,
+  is_favorite: false,
+  current_page_index: 0,
+  total_pages: 15
+}
+
+export const mockExhaustiveNeverLesson6Article: ArticleDTO = {
+  id: 'article_exhaustive_never_lesson6',
+  code: '1.2.5.6.',
+  title: 'Урок 6. Исчерпывающая проверка вариантов через never',
+  tags: ['Vue 3', 'TypeScript', 'Продвинутый Vue'],
+  difficulty: 'Продвинутый',
+  read_time_min: 8,
+  category_path: ['Vue 3', 'Продвинутый Vue 3', 'Уроки: типизированные компоненты', 'Урок 6. Исчерпывающая проверка вариантов через never'],
+  sections: [
+    { id: 'lesson6_sec_1', code: '1.', title: 'Введение', is_read: false },
+    { id: 'lesson6_sec_2', code: '2.', title: 'Пример: assertNever', is_read: false },
+    { id: 'lesson6_sec_3', code: '3.', title: 'Как это защищает от забытых case', is_read: false },
+    { id: 'lesson6_sec_4', code: '4.', title: 'Упражнение: SaveResult', is_read: false },
+    { id: 'lesson6_sec_5', code: '5.', title: 'Быстрое повторение', is_read: false }
+  ],
+  blocks: [
+    {
+      id: 'lesson6_b_1',
+      type: 'paragraph',
+      content:
+        'В прошлом уроке мы связали режим шторки с его полями. Теперь сделаем так, чтобы при добавлении нового режима TypeScript заставлял обновить всю связанную логику.'
+    },
+    { id: 'lesson6_b_2', type: 'heading', level: 2, content: 'Пример: assertNever' },
+    {
+      id: 'lesson6_b_3',
+      type: 'code',
+      language: 'vue',
+      content: `<script setup lang="ts">
+type DrawerSettings =
+  | {
+      Mode: 'create';
+      QueueId: string;
+    }
+  | {
+      Mode: 'edit';
+      TaskId: number;
+    }
+  | {
+      Mode: 'copy';
+      SourceTaskId: number;
+    };
+
+const props = defineProps<{
+  settings: DrawerSettings;
+}>();
+
+const assertNever = (value: never): never => {
+  throw new Error(\`Необработанный вариант: \${JSON.stringify(value)}\`);
+};
+
+const getTitle = (settings: DrawerSettings): string => {
+  switch (settings.Mode) {
+    case 'create':
+      return \`Создание в очереди \${settings.QueueId}\`;
+
+    case 'edit':
+      return \`Редактирование задачи №\${settings.TaskId}\`;
+
+    case 'copy':
+      return \`Копирование задачи №\${settings.SourceTaskId}\`;
+
+    default:
+      return assertNever(settings);
+  }
+};
+</script>
+
+<template>
+  <h2>{{ getTitle(settings) }}</h2>
+</template>`
+    },
+    {
+      id: 'lesson6_b_4',
+      type: 'paragraph',
+      content: 'После обработки всех вариантов переменная settings в ветке default получает тип never: допустимых значений больше не осталось.'
+    },
+    { id: 'lesson6_b_5', type: 'heading', level: 2, content: 'Как это защищает от забытых case' },
+    { id: 'lesson6_b_6', type: 'paragraph', content: 'Если добавить режим:' },
+    {
+      id: 'lesson6_b_7',
+      type: 'code',
+      language: 'typescript',
+      content: `{
+  Mode: 'view';
+  TaskId: number;
+}`
+    },
+    {
+      id: 'lesson6_b_8',
+      type: 'paragraph',
+      content:
+        'но забыть добавить соответствующий case, TypeScript выдаст ошибку в assertNever(settings). Это особенно полезно для статусов задач, режимов шторок, типов уведомлений и элементов дерева.'
+    },
+    { id: 'lesson6_b_9', type: 'heading', level: 2, content: 'Упражнение' },
+    { id: 'lesson6_b_10', type: 'paragraph', content: 'Создайте тип:' },
+    {
+      id: 'lesson6_b_11',
+      type: 'code',
+      language: 'typescript',
+      content: `type SaveResult =
+  | { status: 'success'; taskId: number }
+  | { status: 'validation-error'; fields: readonly string[] }
+  | { status: 'server-error'; message: string };`
+    },
+    { id: 'lesson6_b_12', type: 'paragraph', content: 'Напишите функцию:' },
+    {
+      id: 'lesson6_b_13',
+      type: 'code',
+      language: 'typescript',
+      content: `const getResultMessage = (result: SaveResult): string => {
+  // switch и обязательный assertNever
+};`
+    },
+    {
+      id: 'lesson6_b_14',
+      type: 'paragraph',
+      content: "Затем добавьте состояние { status: 'no-access' }. Убедитесь, что TypeScript покажет место, которое нужно дополнить."
+    },
+    { id: 'lesson6_b_15', type: 'heading', level: 2, content: 'Быстрое повторение' },
+    { id: 'lesson6_b_16', type: 'paragraph', content: 'Что означает never?' },
+    {
+      id: 'lesson6_b_17',
+      type: 'paragraph',
+      content:
+        'Это тип значения, которое в данном месте существовать не может. В исчерпывающем switch он помогает проверить, что обработаны все варианты объединения.'
+    }
+  ],
+  likes_count: 0,
+  comments_count: 0,
+  is_favorite: false,
+  current_page_index: 0,
+  total_pages: 13
+}
+
 export const mockSplitArticle: ArticleDTO = {
   id: 'article_split',
   code: '2.1.',
@@ -1951,6 +2609,10 @@ export const mockArticles: Record<string, ArticleDTO> = {
   [mockTypeScriptVueArticle.id]: mockTypeScriptVueArticle,
   [mockTypedContractLesson1Article.id]: mockTypedContractLesson1Article,
   [mockTypedVModelLesson2Article.id]: mockTypedVModelLesson2Article,
+  [mockAsyncStateLesson3Article.id]: mockAsyncStateLesson3Article,
+  [mockApiNormalizationLesson4Article.id]: mockApiNormalizationLesson4Article,
+  [mockGenericUnionLesson5Article.id]: mockGenericUnionLesson5Article,
+  [mockExhaustiveNeverLesson6Article.id]: mockExhaustiveNeverLesson6Article,
   [mockSplitArticle.id]: mockSplitArticle,
   [mockGuitarArticle.id]: mockGuitarArticle
 }

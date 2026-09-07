@@ -44,6 +44,12 @@ function getColorClass(color: HighlightColor): string {
   }
 }
 
+function handleDelete(noteId: string): void {
+  if (window.confirm('Удалить эту заметку?')) {
+    void notesService.deleteNote(noteId)
+  }
+}
+
 </script>
 
 <template>
@@ -73,10 +79,8 @@ function getColorClass(color: HighlightColor): string {
           v-for="note in filteredNotes"
           :key="note.id"
           padding="sm"
-          clickable
           class="note-card"
           :class="getColorClass(note.color)"
-          @click="appService.showToast(`Выбрана заметка: «${note.quoteText.slice(0, 40)}…»`)"
         >
           <div class="note-card__inner">
             <div class="note-card__content">
@@ -88,7 +92,24 @@ function getColorClass(color: HighlightColor): string {
 
             <div class="note-card__meta">
               <span class="note-card__date">{{ note.createdLabel }}</span>
-              <span class="note-card__icon">📝</span>
+              <div class="note-card__actions">
+                <button
+                  type="button"
+                  class="note-card__action-btn"
+                  aria-label="Редактировать заметку"
+                  @click="notesService.openEditModal(note)"
+                >
+                  ✏️
+                </button>
+                <button
+                  type="button"
+                  class="note-card__action-btn"
+                  aria-label="Удалить заметку"
+                  @click="handleDelete(note.id)"
+                >
+                  🗑️
+                </button>
+              </div>
             </div>
           </div>
         </BaseCard>
@@ -233,8 +254,24 @@ function getColorClass(color: HighlightColor): string {
     white-space: nowrap;
   }
 
-  &__icon {
+  &__actions {
+    display: flex;
+    gap: 0.15rem;
+  }
+
+  &__action-btn {
+    background: transparent;
+    border: none;
     font-size: 0.9rem;
+    line-height: 1;
+    padding: 0.25rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: rgba(15, 23, 42, 0.06);
+    }
   }
 }
 

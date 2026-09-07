@@ -1,18 +1,42 @@
 <script setup lang="ts">
 import { appService } from '@/app/services/app-service'
-import { onMounted, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { BaseBadge, CodeBlock } from '@/shared/ui'
 import { knowledgeService } from '../services/knowledge.service'
 import { knowledgeState } from '../state/knowledge.state'
+import { notesService, notesState } from '@/modules/notes'
 
 const route = useRoute()
 
 async function loadArticleData() {
   const routeId = route.params.id as string || 'article_watch'
-  if (knowledgeState.currentArticle?.id !== routeId) {
-    await knowledgeService.loadArticle(routeId)
+  await Promise.all([
+    knowledgeState.currentArticle?.id !== routeId ? knowledgeService.loadArticle(routeId) : Promise.resolve(),
+    notesState.notes.length === 0 ? notesService.loadNotes() : Promise.resolve()
+  ])
+}
+
+// Заметки грузятся общим списком (см. notes.service) — считаем локально,
+// чтобы не плодить отдельный запрос только под этот бейдж.
+const articleNotesCount = computed(() =>
+  notesState.notes.filter(n => n.articleId === knowledgeState.currentArticle?.id).length
+)
+
+// Если заметки уже есть — сначала показываем их (список «Эта статья»),
+// а не сразу форму создания новой; если заметок нет, создание — логичный первый шаг.
+function handleOpenNotes(): void {
+  if (articleNotesCount.value > 0) {
+    notesService.setActiveTab('current')
+    appService.navigateToScreen('notes')
+  } else {
+    appService.toggleNoteModal(true)
   }
+}
+
+async function handleShare(): Promise<void> {
+  await navigator.clipboard.writeText(window.location.href)
+  appService.showToast('Ссылка скопирована в буфер!')
 }
 
 onMounted(() => {
@@ -57,10 +81,11 @@ watch(() => route.params.id, () => {
         <button
           type="button"
           class="icon-action-btn"
-          title="Заметки к статье"
-          @click="appService.toggleNoteModal(true)"
+          :title="articleNotesCount > 0 ? `Заметки к статье (${articleNotesCount})` : 'Заметки к статье'"
+          @click="handleOpenNotes"
         >
           📝
+          <span v-if="articleNotesCount > 0" class="icon-action-btn__badge">{{ articleNotesCount }}</span>
         </button>
 
         <button
@@ -79,6 +104,15 @@ watch(() => route.params.id, () => {
           @click="appService.openZenMode()"
         >
           Aa
+        </button>
+
+        <button
+          type="button"
+          class="icon-action-btn"
+          title="Поделиться"
+          @click="handleShare"
+        >
+          ↗️
         </button>
       </div>
     </nav>
@@ -105,35 +139,6 @@ watch(() => route.params.id, () => {
           <BaseBadge variant="secondary" size="sm">
             {{ knowledgeState.currentArticle.readTimeText }}
           </BaseBadge>
-        </div>
-
-        <!-- Action Pills Under Title (Matching Screen 4) -->
-        <div class="action-pills-row">
-          <button
-            type="button"
-            class="action-pill"
-            :class="{ 'action-pill--active': knowledgeState.currentArticle.isFavorite }"
-            @click="knowledgeService.toggleFavorite()"
-          >
-            <span>{{ knowledgeState.currentArticle.isFavorite ? '★' : '☆' }}</span>
-            <span>Избранное</span>
-          </button>
-          <button
-            type="button"
-            class="action-pill"
-            @click="appService.toggleNoteModal(true)"
-          >
-            <span>✏️</span>
-            <span>Заметка</span>
-          </button>
-          <button
-            type="button"
-            class="action-pill"
-            @click="appService.showToast('Ссылка скопирована в буфер!')"
-          >
-            <span>↗️</span>
-            <span>Поделиться</span>
-          </button>
         </div>
       </div>
 
@@ -195,9 +200,21 @@ watch(() => route.params.id, () => {
       </div>
 
       <div class="pagination-box">
-        <button type="button" class="page-nav-btn" @click="appService.showToast('Предыдущий раздел')">‹</button>
+        <button
+          type="button"
+          class="page-nav-btn"
+          :disabled="knowledgeState.currentArticle.currentPageIndex <= 0"
+          aria-label="Предыдущая страница"
+          @click="knowledgeService.goToPage(-1)"
+        >‹</button>
         <span class="page-text">{{ knowledgeState.currentArticle.progressText }}</span>
-        <button type="button" class="page-nav-btn" @click="appService.showToast('Следующий раздел')">›</button>
+        <button
+          type="button"
+          class="page-nav-btn"
+          :disabled="knowledgeState.currentArticle.currentPageIndex >= knowledgeState.currentArticle.totalPages - 1"
+          aria-label="Следующая страница"
+          @click="knowledgeService.goToPage(1)"
+        >›</button>
       </div>
     </footer>
   </div>
@@ -268,6 +285,7 @@ watch(() => route.params.id, () => {
     }
 
     .icon-action-btn {
+      position: relative;
       width: 36px;
       height: 36px;
       display: flex;
@@ -280,6 +298,23 @@ watch(() => route.params.id, () => {
       color: #475569;
       cursor: pointer;
       transition: all 0.15s ease;
+
+      &__badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        min-width: 16px;
+        height: 16px;
+        padding: 0 3px;
+        border-radius: 999px;
+        background: #6366f1;
+        color: #ffffff;
+        font-size: 0.625rem;
+        font-weight: 700;
+        line-height: 16px;
+        text-align: center;
+        box-shadow: 0 0 0 2px #ffffff;
+      }
 
       &:hover {
         background: #f1f5f9;
@@ -341,40 +376,6 @@ watch(() => route.params.id, () => {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-}
-
-.action-pills-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding-top: 0.25rem;
-
-  .action-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    padding: 0.35rem 0.85rem;
-    border-radius: 999px;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: #475569;
-    cursor: pointer;
-    transition: all 0.15s ease;
-
-    &:hover {
-      background: #f1f5f9;
-      color: #0f172a;
-      border-color: #cbd5e1;
-    }
-
-    &--active {
-      background: #fef9c3;
-      border-color: #fde047;
-      color: #854d0e;
-    }
-  }
 }
 
 .blocks-container {
@@ -500,6 +501,16 @@ watch(() => route.params.id, () => {
     &:hover {
       color: #0f172a;
       background: #f1f5f9;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.4;
+
+      &:hover {
+        color: #475569;
+        background: #f8fafc;
+      }
     }
   }
 

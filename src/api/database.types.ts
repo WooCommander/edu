@@ -84,12 +84,26 @@ export type ArticleSectionProgressRow = {
   is_read: boolean
 }
 
+export type ArticleSectionProgressInsert = {
+  user_id: string
+  section_id: string
+  is_read?: boolean
+}
+
 export type ArticleReadingProgressRow = {
   user_id: string
   article_id: string
   current_page_index: number
   is_favorite: boolean
   updated_at: string
+}
+
+export type ArticleReadingProgressInsert = {
+  user_id: string
+  article_id: string
+  current_page_index?: number
+  is_favorite?: boolean
+  updated_at?: string
 }
 
 export type NoteRow = {
@@ -125,7 +139,12 @@ export type RecentStudyRow = {
 export type Database = {
   public: {
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      increment_article_likes: {
+        Args: { p_article_id: string }
+        Returns: number
+      }
+    }
     Tables: {
       profiles: TableDef<ProfileRow, ProfileRow>
       tree_nodes: TableDef<TreeNodeRow, TreeNodeRow>
@@ -133,8 +152,8 @@ export type Database = {
       article_sections: TableDef<ArticleSectionRow, ArticleSectionRow>
       article_blocks: TableDef<ArticleBlockRow, ArticleBlockRow>
       tree_node_progress: TableDef<TreeNodeProgressRow, TreeNodeProgressRow>
-      article_section_progress: TableDef<ArticleSectionProgressRow, ArticleSectionProgressRow>
-      article_reading_progress: TableDef<ArticleReadingProgressRow, ArticleReadingProgressRow>
+      article_section_progress: TableDef<ArticleSectionProgressRow, ArticleSectionProgressInsert>
+      article_reading_progress: TableDef<ArticleReadingProgressRow, ArticleReadingProgressInsert>
       notes: TableDef<NoteRow, Omit<NoteRow, 'id' | 'created_at'> & { id?: string; created_at?: string }>
       continue_study: TableDef<ContinueStudyRow, ContinueStudyRow>
       recent_studies: TableDef<RecentStudyRow, RecentStudyRow>

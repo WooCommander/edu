@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { appService } from '@/app/services/app-service'
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { dashboardState } from '../state/dashboard.state'
 import { dashboardService } from '../services/dashboard.service'
 import ContinueStudyCard from './ContinueStudyCard.vue'
@@ -16,6 +16,17 @@ onMounted(async () => {
 function handleRecentClick(item: RecentStudyUIModel): void {
   appService.openArticle(item.articleId)
 }
+
+// Фоллбэк для аватара без похода на внешний сервис
+const userInitials = computed(() => {
+  const name = dashboardState.user?.name?.trim()
+  if (!name) return '?'
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase())
+    .join('')
+})
 </script>
 
 <template>
@@ -24,7 +35,7 @@ function handleRecentClick(item: RecentStudyUIModel): void {
     <header class="dashboard-header">
       <div class="dashboard-header__user">
         <h1 class="dashboard-header__greeting">
-          {{ dashboardState.user?.greeting || 'Добрый вечер, Сергей!' }}
+          {{ dashboardState.user?.greeting || 'Добро пожаловать!' }}
         </h1>
         <p v-if="dashboardState.continueStudy" class="dashboard-header__sub">
           Продолжайте изучение темы «{{ dashboardState.continueStudy.title }}»
@@ -33,10 +44,14 @@ function handleRecentClick(item: RecentStudyUIModel): void {
 
       <div class="dashboard-header__avatar-wrap">
         <img
+          v-if="dashboardState.user?.avatarUrl"
           class="dashboard-header__avatar"
-          :src="dashboardState.user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'"
+          :src="dashboardState.user.avatarUrl"
           alt="Аватар пользователя"
         />
+        <span v-else class="dashboard-header__avatar dashboard-header__avatar--placeholder" aria-hidden="true">
+          {{ userInitials }}
+        </span>
       </div>
     </header>
 
@@ -120,6 +135,16 @@ function handleRecentClick(item: RecentStudyUIModel): void {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  &__avatar--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e0e7ff;
+    color: #4338ca;
+    font-size: 1rem;
+    font-weight: 700;
   }
 }
 </style>

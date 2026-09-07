@@ -1,5 +1,5 @@
 import { apiClient } from '@/api'
-import { adaptArticle, adaptTreeNode, findNodeByArticleId } from '../adapters/knowledge.adapter'
+import { adaptArticle, adaptTreeNode, findNodeByArticleId, findSectionById } from '../adapters/knowledge.adapter'
 import { knowledgeState } from '../state/knowledge.state'
 
 class KnowledgeService {
@@ -30,15 +30,48 @@ class KnowledgeService {
     }
   }
 
-  public toggleFavorite(): void {
-    if (knowledgeState.currentArticle) {
-      knowledgeState.currentArticle.isFavorite = !knowledgeState.currentArticle.isFavorite
+  public async toggleFavorite(): Promise<void> {
+    const article = knowledgeState.currentArticle
+    if (!article) return
+
+    const nextValue = !article.isFavorite
+    article.isFavorite = nextValue
+    try {
+      await apiClient.setArticleFavorite(article.id, nextValue)
+    } catch (error) {
+      article.isFavorite = !nextValue
+      throw error
     }
   }
 
-  public toggleLike(): void {
-    if (knowledgeState.currentArticle) {
-      knowledgeState.currentArticle.likesCount += 1
+  public async toggleLike(): Promise<void> {
+    const article = knowledgeState.currentArticle
+    if (!article) return
+
+    // Счётчик общий на всех пользователей — берём авторитетное значение из
+    // ответа RPC вместо оптимистичного +1, чтобы не разойтись при параллельных лайках.
+    article.likesCount = await apiClient.likeArticle(article.id)
+  }
+
+  public async goToPage(delta: number): Promise<void> {
+    const article = knowledgeState.currentArticle
+    if (!article) return
+
+    const nextIndex = Math.min(Math.max(article.currentPageIndex + delta, 0), Math.max(article.totalPages - 1, 0))
+    if (nextIndex === article.currentPageIndex) return
+
+    const previousIndex = article.currentPageIndex
+    article.currentPageIndex = nextIndex
+    article.progressText = `${nextIndex} из ${article.totalPages}`
+    article.progressPercent = article.totalPages > 0 ? Math.round((nextIndex / article.totalPages) * 100) : 0
+
+    try {
+      await apiClient.setReadingPosition(article.id, nextIndex)
+    } catch (error) {
+      article.currentPageIndex = previousIndex
+      article.progressText = `${previousIndex} из ${article.totalPages}`
+      article.progressPercent = article.totalPages > 0 ? Math.round((previousIndex / article.totalPages) * 100) : 0
+      throw error
     }
   }
 
@@ -54,8 +87,19 @@ class KnowledgeService {
     knowledgeState.isBreadcrumbsOpen = forceState !== undefined ? forceState : !knowledgeState.isBreadcrumbsOpen
   }
 
-  public setSelectedSection(sectionId: string): void {
+  public async setSelectedSection(sectionId: string): Promise<void> {
     knowledgeState.selectedSectionId = sectionId
+
+    const section = knowledgeState.currentArticle && findSectionById(knowledgeState.currentArticle.sections, sectionId)
+    if (!section || section.isRead) return
+
+    section.isRead = true
+    try {
+      await apiClient.setSectionRead(sectionId, true)
+    } catch (error) {
+      section.isRead = false
+      throw error
+    }
   }
 
   public setSelectedNode(nodeId: string): void {

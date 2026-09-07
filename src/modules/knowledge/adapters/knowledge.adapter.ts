@@ -45,6 +45,8 @@ export interface ArticleUIModel {
   likesCount: number
   commentsCount: number
   isFavorite: boolean
+  currentPageIndex: number
+  totalPages: number
   progressText: string
   progressPercent: number
 }
@@ -101,9 +103,25 @@ export function adaptArticle(dto: ArticleDTO): ArticleUIModel {
     likesCount: dto.likes_count,
     commentsCount: dto.comments_count,
     isFavorite: dto.is_favorite,
+    currentPageIndex: dto.current_page_index,
+    totalPages: dto.total_pages,
     progressText: `${dto.current_page_index} из ${dto.total_pages}`,
     progressPercent: dto.total_pages > 0 ? Math.round((dto.current_page_index / dto.total_pages) * 100) : 0
   }
+}
+
+/**
+ * Finds a section (or nested sub-section) by id within an article's TOC
+ * tree. Used to flip `isRead` locally the moment a section is opened,
+ * without waiting on a full article reload.
+ */
+export function findSectionById(sections: ArticleSectionUIModel[], sectionId: string): ArticleSectionUIModel | undefined {
+  for (const section of sections) {
+    if (section.id === sectionId) return section
+    const found = findSectionById(section.children, sectionId)
+    if (found) return found
+  }
+  return undefined
 }
 
 /**

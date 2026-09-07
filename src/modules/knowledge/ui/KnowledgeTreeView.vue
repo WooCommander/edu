@@ -2,6 +2,7 @@
 import { computed, onMounted } from 'vue'
 import { appService } from '@/app/services/app-service'
 import { searchState } from '@/modules/search/state/search.state'
+import { notesService, notesState } from '@/modules/notes'
 import { knowledgeService } from '../services/knowledge.service'
 import { knowledgeState } from '../state/knowledge.state'
 import KnowledgeTreeNode from './KnowledgeTreeNode.vue'
@@ -9,9 +10,14 @@ import { filterTreeByQuery, type TreeNodeUIModel } from '../adapters/knowledge.a
 import { Loader2, SearchX } from 'lucide-vue-next'
 
 onMounted(async () => {
-  if (!knowledgeState.tree) {
-    await knowledgeService.loadKnowledgeTree()
-  }
+  // Дерево — часть сайдбара, оно всегда на экране раньше любой статьи или
+  // страницы заметок, поэтому список заметок грузим прямо здесь: иначе
+  // индикатор «есть заметки» в дереве появлялся бы только после того, как
+  // notesState.notes подгрузили где-то ещё.
+  await Promise.all([
+    !knowledgeState.tree ? knowledgeService.loadKnowledgeTree() : Promise.resolve(),
+    notesState.notes.length === 0 ? notesService.loadNotes() : Promise.resolve()
+  ])
 })
 
 // Живая фильтрация дерева по запросу из поля поиска в сайдбаре

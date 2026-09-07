@@ -13,7 +13,7 @@ class DashboardService {
       ])
 
       dashboardState.user = user
-      dashboardState.continueStudy = adaptContinueStudy(continueItem)
+      dashboardState.continueStudy = continueItem ? adaptContinueStudy(continueItem) : null
       dashboardState.recentStudies = recents.map(adaptRecentStudy)
     } finally {
       dashboardState.isLoading = false

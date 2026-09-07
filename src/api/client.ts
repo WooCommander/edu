@@ -89,12 +89,13 @@ export const apiClient = {
     return { id: data.id, name: data.name, avatarUrl: data.avatar_url, greeting: data.greeting }
   },
 
-  async getContinueStudyItem(): Promise<ContinueStudyItemDTO> {
+  async getContinueStudyItem(): Promise<ContinueStudyItemDTO | null> {
     const userId = await getCurrentUserId()
     const { data, error } = await supabase.from('continue_study').select('*').eq('user_id', userId).maybeSingle()
     if (error) throw error
-    if (!data) throw new Error('Нет записи "продолжить обучение" для пользователя в таблице continue_study.')
 
+    // Отсутствие записи — нормальное состояние («пока нечего продолжать»),
+    // а не ошибка: ContinueStudyCard уже рассчитан на item === null.
     return data
   },
 
@@ -184,6 +185,36 @@ export const apiClient = {
     }
   },
 
+  async setArticleFavorite(articleId: string, isFavorite: boolean): Promise<void> {
+    const userId = await getCurrentUserId()
+    const { error } = await supabase
+      .from('article_reading_progress')
+      .upsert({ user_id: userId, article_id: articleId, is_favorite: isFavorite }, { onConflict: 'user_id,article_id' })
+    if (error) throw error
+  },
+
+  async setReadingPosition(articleId: string, pageIndex: number): Promise<void> {
+    const userId = await getCurrentUserId()
+    const { error } = await supabase
+      .from('article_reading_progress')
+      .upsert({ user_id: userId, article_id: articleId, current_page_index: pageIndex }, { onConflict: 'user_id,article_id' })
+    if (error) throw error
+  },
+
+  async setSectionRead(sectionId: string, isRead: boolean): Promise<void> {
+    const userId = await getCurrentUserId()
+    const { error } = await supabase
+      .from('article_section_progress')
+      .upsert({ user_id: userId, section_id: sectionId, is_read: isRead }, { onConflict: 'user_id,section_id' })
+    if (error) throw error
+  },
+
+  async likeArticle(articleId: string): Promise<number> {
+    const { data, error } = await supabase.rpc('increment_article_likes', { p_article_id: articleId })
+    if (error) throw error
+    return data
+  },
+
   async getNotesByArticleId(articleId?: string): Promise<NoteDTO[]> {
     const userId = await getCurrentUserId()
     const query = supabase.from('notes').select('*').eq('user_id', userId).order('created_at', { ascending: false })
@@ -228,6 +259,43 @@ export const apiClient = {
       created_at_label: 'Только что',
       is_related: data.is_related
     }
+  },
+
+  async updateNote(
+    id: string,
+    patch: Partial<Pick<NoteDTO, 'quote_text' | 'user_comment' | 'color' | 'is_related'>>
+  ): Promise<NoteDTO> {
+    const userId = await getCurrentUserId()
+    const { data, error } = await supabase
+      .from('notes')
+      .update({
+        ...(patch.quote_text !== undefined ? { quote_text: patch.quote_text } : {}),
+        ...(patch.user_comment !== undefined ? { user_comment: patch.user_comment ?? null } : {}),
+        ...(patch.color !== undefined ? { color: patch.color } : {}),
+        ...(patch.is_related !== undefined ? { is_related: patch.is_related } : {})
+      })
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single()
+    if (error || !data) throw error ?? new Error('Не удалось обновить заметку.')
+
+    return {
+      id: data.id,
+      article_id: data.article_id,
+      quote_text: data.quote_text,
+      user_comment: data.user_comment ?? undefined,
+      color: data.color,
+      created_at: data.created_at,
+      created_at_label: formatRelativeDayLabel(data.created_at),
+      is_related: data.is_related
+    }
+  },
+
+  async deleteNote(id: string): Promise<void> {
+    const userId = await getCurrentUserId()
+    const { error } = await supabase.from('notes').delete().eq('id', id).eq('user_id', userId)
+    if (error) throw error
   },
 
   async searchContent(query: string): Promise<SearchResultDTO[]> {

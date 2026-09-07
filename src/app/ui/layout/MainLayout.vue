@@ -90,8 +90,12 @@ function handleOpenArticle(articleId: string = 'article_watch'): void {
   appService.openArticle(articleId)
 }
 
-function handleSaveNote(payload: { quoteText: string; comment: string; color: HighlightColor }): void {
-  void notesService.createNote(payload.quoteText, payload.comment, payload.color)
+function handleSaveNote(payload: { id?: string; quoteText: string; comment: string; color: HighlightColor }): void {
+  if (payload.id) {
+    void notesService.updateNote(payload.id, payload.quoteText, payload.comment, payload.color)
+  } else {
+    void notesService.createNote(payload.quoteText, payload.comment, payload.color)
+  }
 }
 
 async function handleSignOut(): Promise<void> {
@@ -276,7 +280,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleGlobalKeydown))
       :selected-section-id="knowledgeState.selectedSectionId"
       :progress-percent="knowledgeState.currentArticle.progressPercent"
       @close="appService.toggleToc(false)"
-      @select-section="(secId) => { knowledgeState.selectedSectionId = secId; appService.toggleToc(false) }"
+      @select-section="(secId) => { knowledgeService.setSelectedSection(secId); appService.toggleToc(false) }"
     />
 
     <BreadcrumbPathModal
@@ -287,6 +291,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleGlobalKeydown))
 
     <NoteCreateModal
       :is-open="notesState.isCreateModalOpen"
+      :note="notesState.editingNote"
       @close="notesService.toggleCreateModal(false)"
       @save="handleSaveNote"
     />

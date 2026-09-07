@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { FileText, CheckCircle2, ChevronRight, ChevronDown } from 'lucide-vue-next'
+import { FileText, CheckCircle2, ChevronRight, ChevronDown, StickyNote } from 'lucide-vue-next'
+import { notesState } from '@/modules/notes'
 import type { TreeNodeUIModel } from '../adapters/knowledge.adapter'
 
 interface Props {
@@ -23,6 +24,9 @@ const isExpanded = ref(!!props.node.isExpanded)
 const isFolder = computed(() => props.node.children && props.node.children.length > 0)
 const isSelected = computed(() => props.selectedNodeId === props.node.id)
 const showChildren = computed(() => isFolder.value && isExpanded.value)
+const hasNotes = computed(() =>
+  !!props.node.articleId && notesState.notes.some(n => n.articleId === props.node.articleId)
+)
 
 // A branch can still be force-opened later from outside (e.g. a search
 // match appearing under a previously collapsed node) without fighting a
@@ -76,6 +80,7 @@ function handleNodeClick(): void {
         <!-- Text content -->
         <div class="tree-node__text-wrap">
           <span class="tree-node__title">{{ props.node.title }}</span>
+          <StickyNote v-if="hasNotes" class="tree-node__notes-icon" title="Есть заметки" />
         </div>
 
         <!-- Children count badge -->
@@ -220,12 +225,21 @@ function handleNodeClick(): void {
   }
 
   &__title {
+    flex: 1;
+    min-width: 0;
     font-size: 0.85rem;
     color: #334155;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     transition: color 0.2s ease;
+  }
+
+  &__notes-icon {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    color: #f59e0b;
   }
 
   &__badge {

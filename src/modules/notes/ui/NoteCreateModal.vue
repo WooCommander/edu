@@ -1,17 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { BaseButton, BaseInput, BaseModal } from '@/shared/ui'
 import type { HighlightColor } from '@/api'
+import type { NoteUIModel } from '../adapters/notes.adapter'
 
 interface Props {
   isOpen: boolean
+  note?: NoteUIModel | null
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  note: null
+})
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'save', payload: { quoteText: string; comment: string; color: HighlightColor }): void
+  (e: 'save', payload: { id?: string; quoteText: string; comment: string; color: HighlightColor }): void
 }>()
 
 const quoteText = ref('')
@@ -25,9 +29,22 @@ const colorOptions: { key: HighlightColor; label: string; bg: string }[] = [
   { key: 'blue', label: 'Синий', bg: '#3b82f6' }
 ]
 
+// Каждое открытие — либо чистая форма (создание), либо заполненная
+// данными редактируемой заметки.
+watch(
+  () => props.isOpen,
+  (isOpen) => {
+    if (!isOpen) return
+    quoteText.value = props.note?.quoteText ?? ''
+    comment.value = props.note?.userComment ?? ''
+    selectedColor.value = props.note?.color ?? 'amber'
+  }
+)
+
 function handleSave(): void {
   if (quoteText.value.trim()) {
     emit('save', {
+      id: props.note?.id,
       quoteText: quoteText.value.trim(),
       comment: comment.value.trim(),
       color: selectedColor.value
@@ -39,7 +56,7 @@ function handleSave(): void {
 </script>
 
 <template>
-  <BaseModal :is-open="props.isOpen" title="Новая заметка" @close="emit('close')">
+  <BaseModal :is-open="props.isOpen" :title="props.note ? 'Редактировать заметку' : 'Новая заметка'" @close="emit('close')">
     <div class="note-modal-form">
       <!-- Quote text input -->
       <label class="form-label">
@@ -84,7 +101,7 @@ function handleSave(): void {
         :disabled="!quoteText.trim()"
         @click="handleSave"
       >
-        Сохранить заметку
+        {{ props.note ? 'Сохранить изменения' : 'Сохранить заметку' }}
       </BaseButton>
     </template>
   </BaseModal>

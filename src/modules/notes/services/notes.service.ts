@@ -1,7 +1,7 @@
 import { apiClient } from '@/api'
 import type { HighlightColor } from '@/api'
 import { knowledgeState } from '@/modules/knowledge/state/knowledge.state'
-import { adaptNote } from '../adapters/notes.adapter'
+import { adaptNote, type NoteUIModel } from '../adapters/notes.adapter'
 import { notesState } from '../state/notes.state'
 
 class NotesService {
@@ -21,6 +21,12 @@ class NotesService {
 
   public toggleCreateModal(open?: boolean): void {
     notesState.isCreateModalOpen = open !== undefined ? open : !notesState.isCreateModalOpen
+    if (!notesState.isCreateModalOpen) notesState.editingNote = null
+  }
+
+  public openEditModal(note: NoteUIModel): void {
+    notesState.editingNote = note
+    notesState.isCreateModalOpen = true
   }
 
   public async createNote(
@@ -39,6 +45,25 @@ class NotesService {
 
     notesState.notes.unshift(adaptNote(newNoteDto))
     notesState.isCreateModalOpen = false
+  }
+
+  public async updateNote(id: string, quoteText: string, userComment: string, color: HighlightColor): Promise<void> {
+    const updatedDto = await apiClient.updateNote(id, {
+      quote_text: quoteText,
+      user_comment: userComment,
+      color
+    })
+
+    const index = notesState.notes.findIndex(n => n.id === id)
+    if (index !== -1) notesState.notes[index] = adaptNote(updatedDto)
+
+    notesState.isCreateModalOpen = false
+    notesState.editingNote = null
+  }
+
+  public async deleteNote(id: string): Promise<void> {
+    await apiClient.deleteNote(id)
+    notesState.notes = notesState.notes.filter(n => n.id !== id)
   }
 }
 
