@@ -10,10 +10,12 @@ export type ActiveScreen =
   | 'notes'
   | 'article'
   | 'zen'
+  | 'profile'
 
 export interface UserProfile {
   id: Id
   name: string
   avatarUrl: string
   greeting: string
+  email: string
 }

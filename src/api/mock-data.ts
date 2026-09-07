@@ -7,7 +7,8 @@ export const mockUser: UserProfile = {
   id: 'user_1',
   name: 'Сергей',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-  greeting: 'Добрый вечер, Сергей!'
+  greeting: 'Добрый вечер, Сергей!',
+  email: 'sergey@example.com'
 }
 
 export const mockContinueItem: ContinueStudyItemDTO = {

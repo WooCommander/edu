@@ -26,6 +26,11 @@ const routes: RouteRecordRaw[] = [
     path: '/notes',
     name: 'notes',
     component: () => import('@/modules/notes/ui/NotesListView.vue')
+  },
+  {
+    path: '/profile',
+    name: 'profile',
+    component: () => import('@/modules/profile/ui/ProfileView.vue')
   }
 ]
 

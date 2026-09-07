@@ -206,7 +206,14 @@ onUnmounted(() => window.removeEventListener('keydown', handleGlobalKeydown))
       </div>
 
       <div class="sidebar-footer">
-        <div class="user-card">
+        <div
+          class="user-card"
+          role="button"
+          tabindex="0"
+          title="Открыть профиль"
+          @click="appService.navigateToScreen('profile')"
+          @keydown.enter="appService.navigateToScreen('profile')"
+        >
           <img
             v-if="appState.user?.avatarUrl"
             class="user-avatar"
@@ -222,7 +229,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleGlobalKeydown))
             type="button"
             class="sign-out-btn"
             title="Выйти"
-            @click="handleSignOut"
+            @click.stop="handleSignOut"
           >
             <LogOut class="logout-icon" />
           </button>
@@ -519,7 +526,16 @@ onUnmounted(() => window.removeEventListener('keydown', handleGlobalKeydown))
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    
+    cursor: pointer;
+    border-radius: 12px;
+    padding: 0.25rem;
+    margin: -0.25rem;
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: #f8fafc;
+    }
+
     .user-avatar {
       width: 36px;
       height: 36px;

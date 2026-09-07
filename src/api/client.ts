@@ -82,11 +82,43 @@ function buildArticleSections(rows: ArticleSectionRow[], readMap: Map<string, bo
 
 export const apiClient = {
   async getUserProfile(): Promise<UserProfile> {
-    const userId = await getCurrentUserId()
-    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
+    const { data: authData, error: authError } = await supabase.auth.getUser()
+    if (authError || !authData.user) throw new Error('Нет активной сессии Supabase. Сначала выполните вход.')
+
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', authData.user.id).single()
     if (error || !data) throw error ?? new Error('Профиль пользователя не найден.')
 
-    return { id: data.id, name: data.name, avatarUrl: data.avatar_url, greeting: data.greeting }
+    return {
+      id: data.id,
+      name: data.name,
+      avatarUrl: data.avatar_url,
+      greeting: data.greeting,
+      email: authData.user.email ?? ''
+    }
+  },
+
+  async updateUserProfile(patch: { name?: string; avatarUrl?: string }): Promise<UserProfile> {
+    const userId = await getCurrentUserId()
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({
+        ...(patch.name !== undefined ? { name: patch.name } : {}),
+        ...(patch.avatarUrl !== undefined ? { avatar_url: patch.avatarUrl } : {})
+      })
+      .eq('id', userId)
+      .select()
+      .single()
+    if (error || !data) throw error ?? new Error('Не удалось обновить профиль.')
+
+    const { data: authData } = await supabase.auth.getUser()
+
+    return {
+      id: data.id,
+      name: data.name,
+      avatarUrl: data.avatar_url,
+      greeting: data.greeting,
+      email: authData.user?.email ?? ''
+    }
   },
 
   async getContinueStudyItem(): Promise<ContinueStudyItemDTO | null> {
